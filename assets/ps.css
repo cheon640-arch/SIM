@@ -48,7 +48,7 @@ body.psapp footer.foot { display: none; }
 .tb-tabs button { border: 0; background: none; padding: 4px 10px; font: 12px 'Segoe UI', var(--font); cursor: pointer; border-bottom: 2px solid transparent; color: #475569; }
 .tb-tabs button.on { border-bottom-color: #0067c0; color: #0b1726; font-weight: 600; }
 .tb-icons { display: flex; flex-wrap: wrap; gap: 2px; padding: 4px 8px 6px; }
-.tbi { display: flex; flex-direction: column; align-items: center; width: 64px; padding: 3px 2px; border: 1px solid transparent; border-radius: 4px; cursor: grab; font-size: 10.5px; color: #334155; user-select: none; background: none; }
+.tbi { display: flex; flex-direction: column; align-items: center; width: 76px; text-align: center; line-height: 1.15; overflow-wrap: anywhere; padding: 3px 2px; border: 1px solid transparent; border-radius: 4px; cursor: grab; font-size: 10.5px; color: #334155; user-select: none; background: none; }
 .tbi:hover { background: #e6f0fb; border-color: #b8d3f0; }
 .tbi.on { background: #cfe3f8; border-color: #8db8e6; }
 .tbi svg { width: 30px; height: 30px; }

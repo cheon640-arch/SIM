@@ -5,8 +5,8 @@
 <title>팀 프로젝트 · sim notebook</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/style.css?v=2">
-<script src="assets/app.js?v=2"></script>
+<link rel="stylesheet" href="assets/style.css?v=3">
+<script src="assets/app.js?v=5"></script>
 </head>
 <body data-page="proj">
 <div class="wrap">
@@ -55,11 +55,11 @@
 <section class="card"><h2>Plant Simulation 으로 옮기기</h2>
   <div class="tbl"><table class="t">
     <tr><th>요소</th><th>Plant Sim 객체 / 방법</th><th>강의</th></tr>
-    <tr><td>모델 A/B/C 혼류 투입</td><td>MU 3종 (Entity 파생) + TableFile 비율 → Source <b>MU selection: Percentage</b></td><td>2장 예제 1</td></tr>
-    <tr><td>모델별 작업시간</td><td>SingleProc Processing time <b>List(Type)</b> 또는 Entrance control 에서 <code>?.ProcTime :=</code></td><td>2장 예제 1, 5장</td></tr>
+    <tr><td>모델 A/B/C 혼류 투입</td><td>MU 3종 (Part 파생) + DataTable 비율 → Source <b>MU selection: Percentage</b></td><td>2장 예제 1</td></tr>
+    <tr><td>모델별 작업시간</td><td>Station Processing time <b>List(Type)</b> 또는 Entrance control 에서 <code>?.ProcTime :=</code></td><td>2장 예제 1, 5장</td></tr>
     <tr><td>작업시간 편차</td><td>Normal(μ, σ) / Triangle / Lognorm — σ 또는 CV 를 실험변수로</td><td>3장</td></tr>
-    <tr><td>AS-IS 컨베이어</td><td>스테이션 직렬 + 버퍼 0 (Blocking) 또는 <b>Line</b>(길이·속도) + 정렬 버퍼</td><td>2장 예제 5 (Conveyor)</td></tr>
-    <tr><td>TO-BE 경로</td><td>모델별 경로표(TableFile) + 공통 <b>Exit control</b> 메서드 <code>@.move(…)</code> — 필요한 스테이션만</td><td>2장 예제 6 (aRoute, aCur), 5장</td></tr>
+    <tr><td>AS-IS 컨베이어</td><td>스테이션 직렬 + 버퍼 0 (Blocking) 또는 <b>Conveyor</b>(길이·속도) + 정렬 버퍼</td><td>2장 예제 5 (Conveyor)</td></tr>
+    <tr><td>TO-BE 경로</td><td>모델별 경로표(DataTable) + 공통 <b>Exit control</b> 메서드 <code>@.move(…)</code> — 필요한 스테이션만</td><td>2장 예제 6 (aRoute, aCur), 5장</td></tr>
     <tr><td>AMR 대수·이동</td><td>Transporter + Track 또는 AGVpool + Marker + <code>tfWorkList</code></td><td>2장 예제 5 (AGV)</td></tr>
     <tr><td>옵션 선택률</td><td>MU 속성 aOption (Source Exit control 에서 <code>z_uniform</code> 으로 지정) → FlowControl/Exit control 분기</td><td>2·3·5장</td></tr>
     <tr><td>실험 (버퍼 0/2/5/10, AMR 3/5/7 …)</td><td><b>ExperimentManager</b> Input/Output values, Observations 로 반복 · 신뢰구간 비교</td><td>2장 예제 4, 4장</td></tr>

@@ -8,8 +8,8 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
-<link rel="stylesheet" href="assets/style.css?v=2"><link rel="stylesheet" href="assets/notes-tools.css?v=1">
-<script src="assets/des.js?v=1"></script><script src="assets/app.js?v=2"></script>
+<link rel="stylesheet" href="assets/style.css?v=3"><link rel="stylesheet" href="assets/notes-tools.css?v=1">
+<script src="assets/des.js?v=1"></script><script src="assets/app.js?v=5"></script>
 </head>
 <body data-ch="01">
 <div class="wrap">
@@ -89,8 +89,8 @@
   <div class="tbl"><table class="t">
     <tr><th>종류</th><th>뜻</th><th>제조 예</th><th>Plant Sim 에서</th></tr>
     <tr><td><b>Structural</b></td><td>변하지 않는 정적 요소</td><td>공장 레이아웃, 순서, 일정</td><td>Frame 배치, 커넥터</td></tr>
-    <tr><td><b>Operating</b></td><td>처리를 수행하는 동적 요소</td><td>기계, 작업자</td><td>SingleProc, ParallelProc, Worker</td></tr>
-    <tr><td><b>Flowing</b></td><td>시스템이 변환하는 흐르는 것</td><td>부품, 자재</td><td>MU (Entity, Container…)</td></tr>
+    <tr><td><b>Operating</b></td><td>처리를 수행하는 동적 요소</td><td>기계, 작업자</td><td>Station, ParallelStation, Worker</td></tr>
+    <tr><td><b>Flowing</b></td><td>시스템이 변환하는 흐르는 것</td><td>부품, 자재</td><td>MU (Part, Container…)</td></tr>
   </table></div>
   <div class="lab-box">
     <div class="lh"><span class="pill">연습 2</span><b>분류해 보기</b></div>
@@ -225,10 +225,10 @@
   <div class="tbl"><table class="t">
     <tr><th>순서</th><th>할 일</th><th>값</th></tr>
     <tr><td>1</td><td>Models 폴더에 Frame 만들기 (예: myFirst)</td><td></td></tr>
-    <tr><td>2</td><td>Source · Buffer · SingleProc · Drain 끌어다 놓고 Connector 로 연결</td><td></td></tr>
+    <tr><td>2</td><td>Source · Buffer · Station · Drain 끌어다 놓고 Connector 로 연결</td><td></td></tr>
     <tr><td>3</td><td><b>Source</b> Interval</td><td>Negexp, 6:00 (= 6분 × 60초)</td></tr>
     <tr><td>4</td><td><b>Buffer</b> Capacity</td><td>-1 (무한) 또는 양의 정수</td></tr>
-    <tr><td>5</td><td><b>SingleProc</b> (TakeOrder) Processing time</td><td>Negexp, 3:00</td></tr>
+    <tr><td>5</td><td><b>Station</b> (TakeOrder) Processing time</td><td>Negexp, 3:00</td></tr>
     <tr><td>6</td><td><b>EventController</b> 종료 시각 설정 → Start</td><td></td></tr>
     <tr><td>7</td><td>결과: Drain 의 Statistics, Summary report</td><td></td></tr>
   </table></div>

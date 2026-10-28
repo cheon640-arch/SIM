@@ -5,8 +5,8 @@
 <title>sim notebook · 시뮬레이션</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/style.css?v=2">
-<script src="assets/app.js?v=2"></script>
+<link rel="stylesheet" href="assets/style.css?v=3">
+<script src="assets/app.js?v=5"></script>
 <style>
   .home-hero { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 28px; align-items: center; padding: 56px 0 30px; }
   .ps-preview { background: #e9edf2; border: 1px solid #c9d1db; border-radius: 12px; padding: 14px; }
@@ -63,7 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const cls = ['y', 'b', '', 'c', ''];
   document.getElementById('chs').innerHTML = RL_CHAPTERS.map((c, i) => { const d = RL_STORE.get('done-' + c.id) || {}, t = RL_STORE.get('total-' + c.id) || 0, n = Object.values(d).filter(Boolean).length, p = t ? Math.round(n / t * 100) : 0;
     return `<a class="ccard ${cls[i]}" href="${c.file}"><div class="no">Chapter ${c.id}</div><h3>${c.title}</h3><ul>${D[c.id].map(x => `<li>${x}</li>`).join('')}</ul><div class="mini-bar"><i style="width:${p}%"></i></div></a>`; }).join('');
-  const G = [['coffee', '1장', '커피 부스 — 첫 모델'], ['recipes', '2장 예제 1', '사용자 정의 MU · TableFile · Method'], ['block', '2장', '버퍼와 블로킹'], ['mill', '2장 예제 2', '밀링 병목 · Exit strategy'], ['sorter', '2장 예제 3', 'Sorter'], ['drive', '2장 예제 4', 'ExperimentManager 로 k 최적화'], ['pipe', '2장 예제 5·6', 'FlowControl 확률 분기'], ['output', '4장', '반복 실행 · 워밍업'], ['simtalk', '5장', 'SimTalk · Exit control']];
+  const G = [['coffee', '1장', '커피 부스 — 첫 모델'], ['recipes', '2장 예제 1', '사용자 정의 MU · DataTable · Method'], ['block', '2장', '버퍼와 블로킹'], ['mill', '2장 예제 2', '밀링 병목 · Exit strategy'], ['sorter', '2장 예제 3', 'Sorter'], ['drive', '2장 예제 4', 'ExperimentManager 로 k 최적화'], ['pipe', '2장 예제 5·6', 'FlowControl 확률 분기'], ['output', '4장', '반복 실행 · 워밍업'], ['simtalk', '5장', 'SimTalk · Exit control']];
   document.getElementById('guides').innerHTML = G.map(([id, ch, t]) => `<a href="simulator.html?guide=${id}"><small>${ch}</small>${t}</a>`).join('');
 });
 </script>

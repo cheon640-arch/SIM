@@ -133,14 +133,59 @@
   }
   window.SIM_INIT_PRACTICE = initPractice;
 
+  /* ---------- 강의 슬라이드 (로컬 전용: slides/ 폴더는 배포하지 않음 → 없으면 아무것도 안 보임) ---------- */
+  const DECKS = { ch01: 37, ch02: 109, ch03: 49, ch04: 44, ch05: 26, proj: 8 };
+  const SLIDE_MAP = {
+    '01': { def: '2-8', system: '9-13', event: '14-15', hand: '16-19', excel: '20-25', ps: '26-35', steps: '36', mm1: '37' },
+    '02': { terms: '3-4', create: '5-6', ex1: '11-33', branch: '36-42', ex2: '34-35,43-46', ex3: '47-58', ex4: '59-67', mh: '71-102', ex56: '68-70,103-109' },
+    '03': { dist: '3-8', steps: '9-11', fit: '12-19', ppqq: '20-26', lcg: '27-40', inv: '41-45', ar: '46-49' },
+    '04': { rep: '3-4', obs: '5-16', horizon: '17-18', nrep: '19-21', warm: '22-24', cmp: '25-28', opt: '29-44' },
+    '05': { method: '3-5', names: '6-7', types: '8-11', flow: '12-19', call: '20', timebased: '21-23', v1v2: '24-26' },
+    proj: { _first: '1-8' },
+  };
+  const slideNo = n => n === 1 ? '표지' : '#' + (n - 1); // 슬라이드에 찍힌 번호 = PDF 쪽 − 1
+  const slideSrc = (deck, n) => `slides/${deck}/p${String(n).padStart(3, '0')}.jpg`;
+  const parseRange = r => r.split(',').flatMap(x => { const [a, b] = x.split('-').map(Number); return Array.from({ length: (b || a) - a + 1 }, (_, i) => a + i); });
+  let LB = null;
+  function lightbox(deck, n) {
+    if (!LB) {
+      LB = document.createElement('div'); LB.className = 'sl-lb';
+      LB.innerHTML = '<button class="sl-x" title="닫기 (Esc)">✕</button><button class="sl-prev" title="이전 (←)">‹</button><figure><img alt=""><figcaption></figcaption></figure><button class="sl-next" title="다음 (→)">›</button>';
+      document.body.appendChild(LB);
+      LB.addEventListener('click', e => { if (e.target === LB || e.target.classList.contains('sl-x')) LB.hidden = true; });
+      LB.querySelector('.sl-prev').onclick = () => show(LB.n - 1); LB.querySelector('.sl-next').onclick = () => show(LB.n + 1);
+      document.addEventListener('keydown', e => { if (!LB || LB.hidden) return; if (e.key === 'Escape') LB.hidden = true; if (e.key === 'ArrowLeft') show(LB.n - 1); if (e.key === 'ArrowRight') show(LB.n + 1); });
+    }
+    const show = k => { const max = DECKS[LB.deck]; if (k < 1 || k > max) return; LB.n = k; LB.querySelector('img').src = slideSrc(LB.deck, k); LB.querySelector('figcaption').textContent = `강의자료 ${LB.deck === 'proj' ? '프로젝트 안내' : 'Chap ' + LB.deck.slice(2)} · 슬라이드 ${slideNo(k)}  (${k} / ${max})   ← → 로 넘기기`; };
+    LB.deck = deck; LB.hidden = false; show(n);
+  }
+  function initSlides(chId) {
+    const map = SLIDE_MAP[chId]; if (!map) return;
+    const deck = chId === 'proj' ? 'proj' : 'ch' + chId;
+    const probe = new Image();
+    probe.onload = () => {
+      document.querySelectorAll(map._first ? 'section.card' : 'section.card[id]').forEach((sec, idx) => {
+        const r = map._first ? (idx === 0 ? map._first : null) : map[sec.id]; if (!r) return;
+        const pages = parseRange(r);
+        const box = document.createElement('div'); box.className = 'sl-strip';
+        box.innerHTML = `<div class="sl-h"><span>📑 강의 슬라이드 ${slideNo(pages[0])}${pages.length > 1 ? ' ~ ' + slideNo(pages[pages.length - 1]) : ''}</span><span class="sl-n">${pages.length}장 · 클릭하면 크게</span></div><div class="sl-row">${pages.map(n => `<button class="sl-t" data-n="${n}" title="슬라이드 ${slideNo(n)}"><img loading="lazy" src="${slideSrc(deck, n)}" alt="슬라이드 ${slideNo(n)}"><span>${slideNo(n)}</span></button>`).join('')}</div>`;
+        box.querySelectorAll('.sl-t').forEach(b => b.onclick = () => lightbox(deck, +b.dataset.n));
+        const h = sec.querySelector(':scope > h2'); if (h) h.after(box); else sec.prepend(box);
+      });
+      const hero = document.querySelector('.hero .meta') || document.querySelector('.hero .lede');
+      if (hero) { const b = document.createElement('button'); b.className = 'btn sm ghost'; b.style.marginLeft = '8px'; b.textContent = '📑 강의자료 전체 넘겨 보기'; b.onclick = () => lightbox(deck, 1); hero.appendChild(b); }
+    };
+    probe.src = slideSrc(deck, 1);
+  }
+
   /* ---------- Plant Sim 실습 카드 ---------- */
   const GUIDES = {
-    coffee: ['커피 부스 — 첫 Plant Simulation 모델', ['Source · Buffer · SingleProc(TakeOrder) · Drain 끌어다 놓기', 'Connector 로 연결', 'Interval Negexp 6:00, Processing time Negexp 3:00, Capacity −1', 'EventController End 30일 → 실행', 'Statistics 에서 Working %, Average lifespan, 평균 대기열 읽고 M/M/1 이론과 비교']],
-    recipes: ['수정된 커피 부스 — 사용자 정의 MU · TableFile · Method', ['MUs: Entity 복제 → myEntity, 속성 aNoRecipes · aArrTime', '파생 myEntity1·2·3', 'TableFile tbEntity + Source MU selection Percentage', 'Processing time List(Type)', 'Variable vWIP · Method mCustArrival / mLeaveSys (Entrance control)', 'tbSystemLog 기록 · Type statistics']],
+    coffee: ['커피 부스 — 첫 Plant Simulation 모델', ['Source · Buffer · Station(TakeOrder) · Drain 끌어다 놓기', 'Connector 로 연결', 'Interval Negexp 6:00, Processing time Negexp 3:00, Capacity −1', 'EventController End 30일 → 실행', 'Statistics 에서 Working %, Average lifespan, 평균 대기열 읽고 M/M/1 이론과 비교']],
+    recipes: ['수정된 커피 부스 — 사용자 정의 MU · DataTable · Method', ['MUs: Entity 복제 → myEntity, 속성 aNoRecipes · aArrTime', '파생 myEntity1·2·3', 'DataTable tbEntity + Source MU selection Percentage', 'Processing time List(Type)', 'Variable vWIP · Method mCustArrival / mLeaveSys (Entrance control)', 'tbSystemLog 기록 · Type statistics']],
     block: ['버퍼와 블로킹', ['버퍼 없는 직렬 라인 실행 → S1 의 Blocked % 확인', '연결선 지우고 Buffer(용량 2) 끼워 넣기', '처리량 비교']],
     mill: ['밀링 병목 — 병렬 기계와 Exit strategy', ['병목 Milling 의 Working % 확인', 'Milling2(3:00) 추가 · 분기 연결', 'Cyclic vs Start at successor 1 비교']],
     sorter: ['Sorter — 레시피 적은 손님 먼저', ['Buffer 를 Sorter 로 교체', 'Sort 기준 aNoRecipes Ascending', 'Type statistics 로 타입별 체류 비교']],
-    drive: ['드라이브스루 — ExperimentManager', ['Source Non-blocking (손님 이탈)', 'ParallelProc X-dimension = 점원 수 k', 'Variable 3개 + EndSim 메서드로 이익 계산', 'ExperimentManager: Input Window.XDim · Buffer.Capacity, Output vTotalProfit', '실험 결과로 최적 k 찾기']],
+    drive: ['드라이브스루 — ExperimentManager', ['Source Non-blocking (손님 이탈)', 'ParallelStation X-dimension = 점원 수 k', 'Variable 3개 + EndSim 메서드로 이익 계산', 'ExperimentManager: Input Window.XDim · Buffer.Capacity, Output vTotalProfit', '실험 결과로 최적 k 찾기']],
     pipe: ['파이프 공장 — FlowControl 확률 분기', ['FlowControl 후속 연결 순서', 'Exit strategy Percentage 70/30', 'Lognorm · Triangle 처리시간 확인', '굽힘 스테이션 이용률 > 1 확인 → 60/40 으로 바꿔 보기']],
     output: ['출력 분석 — 반복 실행과 워밍업', ['한 번 실행 → 시드 바꿔 다시 (RIRO)', 'ExperimentManager Observations 10 → 반폭', 'Statistics start(워밍업) 3시간 → 이론값과 비교']],
     simtalk: ['SimTalk — Method 편집기 · Exit control', ['Init 메서드 print → Console', 'for 루프로 1~100 합 (Variable)', 'param / return 함수 getMax', 'Exit control 로 타입별 라우팅 (@.move)']],
@@ -157,6 +202,7 @@
     document.body.insertAdjacentHTML('afterbegin', header(page));
     document.body.insertAdjacentHTML('beforeend', footer());
     if (chId) { buildToc(chId); chapterNav(chId); }
+    initSlides(chId || (page === 'proj' ? 'proj' : ''));
     initPsLabs();
     initPractice(document);
     renderMath();

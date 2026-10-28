@@ -233,3 +233,22 @@ section.card .ps-lab li { color: #dbe7ff; margin: 2px 0; }
 .ps-lab .pl-note { color: #9cc9f5 !important; font-size: 14px; margin: 0 0 10px; }
 .ps-lab .pl-sub { color: #9cc9f5; font-size: 12.5px; margin-left: 8px; }
 .lab-box > .lh .pill { background: #615d59; }
+
+/* 강의 슬라이드 미리보기 (로컬 전용) */
+.sl-strip { margin: 10px 0 14px; border: 1px solid var(--line); border-radius: 10px; background: #fbfaf9; padding: 8px 10px 10px; }
+.sl-h { display: flex; justify-content: space-between; gap: 8px; font-size: 12.5px; font-weight: 600; color: var(--graphite); margin-bottom: 6px; }
+.sl-h .sl-n { font-weight: 400; color: var(--stone); }
+.sl-row { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; scroll-snap-type: x proximity; }
+.sl-t { flex: none; width: 200px; border: 1px solid var(--line-2); border-radius: 6px; padding: 0; background: #fff; cursor: zoom-in; scroll-snap-align: start; position: relative; transition: transform .2s ease; }
+.sl-t:hover { transform: translateY(-2px); border-color: var(--blue); }
+.sl-t img { display: block; width: 100%; height: auto; border-radius: 5px; aspect-ratio: 16 / 9; object-fit: contain; background: #fff; }
+.sl-t span { position: absolute; right: 4px; bottom: 4px; font-size: 10.5px; background: rgba(0,0,0,.6); color: #fff; border-radius: 4px; padding: 0 5px; }
+.sl-lb { position: fixed; inset: 0; z-index: 120; background: rgba(2,9,58,.88); display: flex; align-items: center; justify-content: center; gap: 10px; padding: 20px; }
+.sl-lb[hidden] { display: none; }
+.sl-lb figure { margin: 0; max-width: min(1400px, 90vw); }
+.sl-lb img { display: block; max-width: 100%; max-height: 84vh; border-radius: 6px; background: #fff; }
+.sl-lb figcaption { color: #dbe7ff; font-size: 13px; text-align: center; margin-top: 8px; white-space: pre; }
+.sl-lb button { border: 0; background: rgba(255,255,255,.12); color: #fff; font-size: 34px; width: 48px; height: 64px; border-radius: 8px; cursor: pointer; }
+.sl-lb button:hover { background: rgba(255,255,255,.25); }
+.sl-lb .sl-x { position: absolute; top: 14px; right: 18px; font-size: 20px; width: 40px; height: 40px; }
+@media print { .sl-strip { display: none; } }

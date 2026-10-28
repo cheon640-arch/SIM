@@ -12,15 +12,15 @@
     switch (cls) {
       case 'Source': return s(box + '<path d="M11 20h16M21 13l7 7-7 7" stroke="#0a8a3a" stroke-width="3" fill="none"/>');
       case 'Drain': return s(box + '<path d="M8 20h14M16 13l7 7-7 7" stroke="#c62828" stroke-width="3" fill="none"/><rect x="25" y="12" width="7" height="16" fill="#c62828"/>');
-      case 'SingleProc': return s(box + '<rect x="11" y="12" width="18" height="16" rx="2" fill="#cfe3f8" stroke="#0067c0" stroke-width="1.6"/><circle cx="20" cy="20" r="3.4" fill="#0067c0"/>');
-      case 'ParallelProc': return s(box + [0, 1].map(i => [0, 1].map(j => `<rect x="${9 + i * 12}" y="${10 + j * 11}" width="10" height="9" rx="1.5" fill="#cfe3f8" stroke="#0067c0" stroke-width="1.3"/>`).join('')).join(''));
+      case 'Station': return s(box + '<rect x="11" y="12" width="18" height="16" rx="2" fill="#cfe3f8" stroke="#0067c0" stroke-width="1.6"/><circle cx="20" cy="20" r="3.4" fill="#0067c0"/>');
+      case 'ParallelStation': return s(box + [0, 1].map(i => [0, 1].map(j => `<rect x="${9 + i * 12}" y="${10 + j * 11}" width="10" height="9" rx="1.5" fill="#cfe3f8" stroke="#0067c0" stroke-width="1.3"/>`).join('')).join(''));
       case 'Buffer': return s(box + [0, 1, 2].map(i => `<rect x="${9 + i * 8}" y="15" width="6" height="10" fill="#ffd27a" stroke="#8a5a00" stroke-width="1"/>`).join(''));
       case 'Sorter': return s(box + [0, 1, 2].map(i => `<rect x="${9 + i * 8}" y="${21 - i * 3}" width="6" height="${6 + i * 3}" fill="#ffd27a" stroke="#8a5a00" stroke-width="1"/>`).join('') + '<path d="M9 31h22" stroke="#8a5a00" stroke-width="1.5"/>');
-      case 'Line': return s('<rect x="2" y="14" width="36" height="12" rx="6" fill="#e2e8f0" stroke="#334155" stroke-width="1.4"/>' + [0, 1, 2, 3].map(i => `<circle cx="${9 + i * 7.3}" cy="20" r="2.2" fill="#64748b"/>`).join(''));
+      case 'Conveyor': return s('<rect x="2" y="14" width="36" height="12" rx="6" fill="#e2e8f0" stroke="#334155" stroke-width="1.4"/>' + [0, 1, 2, 3].map(i => `<circle cx="${9 + i * 7.3}" cy="20" r="2.2" fill="#64748b"/>`).join(''));
       case 'FlowControl': return s(box + '<path d="M9 20h8M17 20l9-7M17 20l9 7" stroke="#7c3aed" stroke-width="2.4" fill="none"/><circle cx="17" cy="20" r="2.4" fill="#7c3aed"/>');
       case 'Method': return s('<rect x="7" y="4" width="26" height="32" rx="2" fill="#fff" stroke="#334155" stroke-width="1.4"/><text x="20" y="18" text-anchor="middle" font-size="12" font-weight="700" fill="#0067c0" font-family="Segoe UI,sans-serif">M</text><path d="M12 24h16M12 28h12M12 32h14" stroke="#94a3b8" stroke-width="1.5"/>');
       case 'Variable': return s('<rect x="4" y="9" width="32" height="22" rx="3" fill="#fff" stroke="#334155" stroke-width="1.4"/><text x="20" y="25" text-anchor="middle" font-size="13" font-weight="700" fill="#0a8a3a" font-family="Consolas,monospace">n=</text>');
-      case 'TableFile': return s('<rect x="5" y="7" width="30" height="26" fill="#fff" stroke="#334155" stroke-width="1.4"/><path d="M5 14h30M5 21h30M5 28h30M15 7v26M25 7v26" stroke="#94a3b8"/><rect x="5" y="7" width="30" height="7" fill="#cfe3f8" opacity=".7"/>');
+      case 'DataTable': return s('<rect x="5" y="7" width="30" height="26" fill="#fff" stroke="#334155" stroke-width="1.4"/><path d="M5 14h30M5 21h30M5 28h30M15 7v26M25 7v26" stroke="#94a3b8"/><rect x="5" y="7" width="30" height="7" fill="#cfe3f8" opacity=".7"/>');
       case 'EventController': return s('<circle cx="20" cy="20" r="15" fill="#fff" stroke="#334155" stroke-width="1.6"/><path d="M20 10v10l7 4" stroke="#c62828" stroke-width="2.4" fill="none"/>');
       case 'ExperimentManager': return s('<path d="M15 5h10M17 5v10L9 32a2 2 0 0 0 2 3h18a2 2 0 0 0 2-3L23 15V5" fill="#fff" stroke="#334155" stroke-width="1.5"/><path d="M12 27h16l2 5H10z" fill="#62aef0"/>');
       case 'Connector': return s('<path d="M7 32L31 9" stroke="#1b1f24" stroke-width="2"/><path d="M31 9l-8 2 6 6z" fill="#1b1f24"/><circle cx="7" cy="32" r="3" fill="#1b1f24"/>');
@@ -32,13 +32,13 @@
     return s(box);
   }
   const CLS_INFO = {
-    Source: 'MU 를 만들어 내보내요', Drain: 'MU 를 없애요 (통계 기록)', SingleProc: '한 번에 MU 1개 처리', ParallelProc: '여러 MU 를 동시에 처리 (X×Y 자리)',
-    Buffer: 'MU 를 쌓아 두는 대기 공간', Sorter: '속성 순서대로 꺼내는 버퍼', Line: '컨베이어 (길이 ÷ 속도 = 이동시간)', FlowControl: '분기 규칙만 가진 객체',
-    Method: 'SimTalk 프로그램', Variable: '전역 변수', TableFile: '표 (2차원 자료)', EventController: '시뮬레이션 시계 · 시작/정지', ExperimentManager: '여러 실험을 자동 실행', Connector: '객체 연결선 (MU 흐름 방향)', Comment: '메모',
+    Source: 'MU 를 만들어 내보내요', Drain: 'MU 를 없애요 (통계 기록)', Station: '한 번에 MU 1개 처리', ParallelStation: '여러 MU 를 동시에 처리 (X×Y 자리)',
+    Buffer: 'MU 를 쌓아 두는 대기 공간', Sorter: '속성 순서대로 꺼내는 버퍼', Conveyor: '컨베이어 (길이 ÷ 속도 = 이동시간)', FlowControl: '분기 규칙만 가진 객체',
+    Method: 'SimTalk 프로그램', Variable: '전역 변수', DataTable: '표 (2차원 자료)', EventController: '시뮬레이션 시계 · 시작/정지', ExperimentManager: '여러 실험을 자동 실행', Connector: '객체 연결선 (MU 흐름 방향)', Comment: '메모',
   };
   const TOOLBOX = [
-    ['Material Flow', ['Connector', 'EventController', 'Source', 'Drain', 'SingleProc', 'ParallelProc', 'Buffer', 'Sorter', 'FlowControl', 'Line']],
-    ['Information Flow', ['Method', 'Variable', 'TableFile']],
+    ['Material Flow', ['Connector', 'EventController', 'Source', 'Drain', 'Station', 'ParallelStation', 'Buffer', 'Sorter', 'FlowControl', 'Conveyor']],
+    ['Information Flow', ['Method', 'Variable', 'DataTable']],
     ['User Interface', ['Comment']],
     ['Tools', ['ExperimentManager']],
   ];
@@ -50,8 +50,16 @@
   function save() { try { localStorage.setItem(saveKey(), JSON.stringify(S.model)); } catch (e) {} }
   function load(key) { try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : null; } catch (e) { return null; } }
   S.save = save;
+  /* 옛 이름(14.0 이전)으로 저장된 모델 → 2201 이름 */
+  const REN = { SingleProc: 'Station', ParallelProc: 'ParallelStation', Line: 'Conveyor', TableFile: 'DataTable' };
+  function migrate(m) {
+    Object.values(m.objects || {}).forEach(o => { if (REN[o.cls]) o.cls = REN[o.cls]; if (o.mu === 'Entity') o.mu = 'Part'; });
+    if (m.mus && m.mus.Entity && !m.mus.Part) { m.mus.Part = m.mus.Entity; delete m.mus.Entity; }
+    Object.values(m.mus || {}).forEach(u => { if (u.base === 'Entity') u.base = 'Part'; });
+    return m;
+  }
   function ensureEC(m) { if (!Object.values(m.objects).some(o => o.cls === 'EventController')) m.objects.EventController = { cls: 'EventController', x: 40, y: 30 }; if (!m.ec) m.ec = { end: 86400, statStart: 0 }; return m; }
-  S.setModel = (m, keepSel) => { S.model = ensureEC(m); if (!keepSel) S.sel = null; resetSim(); renderAll(); };
+  S.setModel = (m, keepSel) => { S.model = ensureEC(migrate(m)); if (!keepSel) S.sel = null; resetSim(); renderAll(); };
   S.changed = (what) => { resetSim(); save(); renderFrame(); renderLib(); notify(what || 'model'); };
   function notify(what) { S.listeners.forEach(f => { try { f(what); } catch (e) { console.error(e); } }); }
   S.onChange = f => S.listeners.push(f);
@@ -158,8 +166,8 @@
     const leaf = (cls, label, attrs = '') => `<li><div class="nd" ${attrs}><span class="tw"></span><span class="ico">${icon(cls)}</span>${esc(label)}</div></li>`;
     const folder = (label, inner, open = true) => `<li class="${open ? '' : 'closed'}"><div class="nd"><span class="tw" data-tw>${open ? '▾' : '▸'}</span><span class="ico">${icon('Folder')}</span>${label}</div><ul class="tree">${inner}</ul></li>`;
     $('#ps-tree').innerHTML = folder('Models', `<li><div class="nd sel"><span class="tw">▾</span><span class="ico">${icon('Frame')}</span>Frame</div><ul class="tree">${frameObjs.map(([n, o]) => `<li><div class="nd" data-obj="${esc(n)}"><span class="tw"></span><span class="ico">${icon(o.cls)}</span>${esc(n)}</div></li>`).join('')}</ul></li>`) +
-      folder('MaterialFlow', ['Connector', 'EventController', 'Source', 'Drain', 'SingleProc', 'ParallelProc', 'Buffer', 'Sorter', 'FlowControl', 'Line'].map(c => leaf(c, c, `draggable="true" data-cls="${c}" title="${esc(CLS_INFO[c])}"`)).join('')) +
-      folder('InformationFlow', ['Method', 'Variable', 'TableFile'].map(c => leaf(c, c, `draggable="true" data-cls="${c}" title="${esc(CLS_INFO[c])}"`)).join('')) +
+      folder('MaterialFlow', ['Connector', 'EventController', 'Source', 'Drain', 'Station', 'ParallelStation', 'Buffer', 'Sorter', 'FlowControl', 'Conveyor'].map(c => leaf(c, c, `draggable="true" data-cls="${c}" title="${esc(CLS_INFO[c])}"`)).join('')) +
+      folder('InformationFlow', ['Method', 'Variable', 'DataTable'].map(c => leaf(c, c, `draggable="true" data-cls="${c}" title="${esc(CLS_INFO[c])}"`)).join('')) +
       folder('UserInterface', leaf('Comment', 'Comment', 'draggable="true" data-cls="Comment"'), false) +
       folder('MUs', mus.map(([n, m]) => `<li><div class="nd ${S.selMU === n ? 'sel' : ''}" data-mu="${esc(n)}" title="더블클릭: 속성 편집"><span class="tw"></span><span class="ico">${icon('MU', m.color)}</span>${esc(n)}${m.base ? ` <span style="color:#94a3b8;font-size:11px">(${esc(m.base)} 파생)</span>` : ''}</div></li>`).join('')) +
       folder('Tools', leaf('ExperimentManager', 'ExperimentManager', 'draggable="true" data-cls="ExperimentManager"'));
@@ -169,7 +177,7 @@
     $$('#ps-tree [data-mu]').forEach(n => { n.onclick = () => { S.selMU = n.dataset.mu; renderLib(); }; n.ondblclick = () => openMUDialog(n.dataset.mu); });
   }
   function muAction(kind) {
-    const base = S.selMU || 'Entity', src = S.model.mus[base]; if (!src) return;
+    const base = S.selMU || 'Part', src = S.model.mus[base]; if (!src) return;
     const name = uniqueName(kind === 'derive' ? base : 'my' + base.replace(/^my/, ''));
     S.model.mus[name] = kind === 'derive' ? { ...clone(src), base } : { ...clone(src), base: undefined };
     S.selMU = name; S.changed('mu'); openMUDialog(name);
@@ -181,7 +189,7 @@
     $('#tb-tabs').innerHTML = TOOLBOX.map((t, i) => `<button class="${i === tbTab ? 'on' : ''}" data-i="${i}">${t[0]}</button>`).join('') + `<button data-i="mu" class="${tbTab === 'mu' ? 'on' : ''}">MUs</button>`;
     $$('#tb-tabs button').forEach(b => b.onclick = () => { tbTab = b.dataset.i === 'mu' ? 'mu' : +b.dataset.i; renderToolbox(); });
     if (tbTab === 'mu') { $('#tb-icons').innerHTML = Object.entries(S.model.mus).map(([n, m]) => `<div class="tbi" data-mu="${esc(n)}" title="더블클릭: 속성">${icon('MU', m.color)}${esc(n)}</div>`).join('') + '<span style="font-size:11.5px;color:#64748b;align-self:center;margin-left:8px">MU 는 Frame 에 놓지 않아요 — Source 의 MU 설정에서 골라요. 새 MU: 클래스 라이브러리 MUs 에서 복제/파생.</span>'; $$('#tb-icons [data-mu]').forEach(n => n.ondblclick = () => openMUDialog(n.dataset.mu)); return; }
-    $('#tb-icons').innerHTML = TOOLBOX[tbTab][1].map(c => `<div class="tbi ${c === 'Connector' && S.connect ? 'on' : ''}" draggable="${c !== 'Connector'}" data-cls="${c}" title="${esc(c + ' — ' + CLS_INFO[c])}">${icon(c)}${c === 'ExperimentManager' ? 'ExpManager' : c === 'EventController' ? 'EventCtrl' : c}</div>`).join('');
+    $('#tb-icons').innerHTML = TOOLBOX[tbTab][1].map(c => `<div class="tbi ${c === 'Connector' && S.connect ? 'on' : ''}" draggable="${c !== 'Connector'}" data-cls="${c}" title="${esc(c + ' — ' + CLS_INFO[c])}">${icon(c)}${c}</div>`).join('');
     $$('#tb-icons [data-cls]').forEach(n => { if (n.dataset.cls === 'Connector') n.onclick = toggleConnect; else { n.addEventListener('dragstart', e => e.dataTransfer.setData('text/ps-cls', n.dataset.cls)); n.onclick = () => setPlacing(S.placing === n.dataset.cls ? null : n.dataset.cls); } if (S.placing === n.dataset.cls) n.classList.add('on'); });
   }
   function setPlacing(cls) { S.placing = cls; if (cls && S.connect) { S.connect = false; S.connFrom = null; $('#ps-frame').classList.remove('connect'); } $('#ps-frame').style.cursor = cls ? 'copy' : ''; $('#fw-hint').textContent = cls ? `${cls}: Frame 의 빈 곳을 클릭하면 놓여요 (Esc 취소)` : '도구 상자에서 끌어다 놓기 또는 클릭 후 Frame 클릭 · 더블클릭 = 설정 · Delete = 삭제'; renderToolbox(); }
@@ -220,11 +228,11 @@
     for (const [n, o] of Object.entries(S.model.objects)) {
       const led = document.getElementById('led-' + n), cnt = document.getElementById('cnt-' + n), mu = document.getElementById('mu-' + n);
       const ro = sim && sim.O[n];
-      if (led) { let c = '#cbd5e1'; if (ro) { const w = ro.items.some(i => i.st === 'work'), b = ro.items.some(i => i.st === 'ready'); if (o.cls === 'SingleProc' || o.cls === 'ParallelProc') c = w ? '#22c55e' : b ? '#facc15' : '#cbd5e1'; else if (o.cls === 'Source') c = ro.items.length ? '#facc15' : '#22c55e'; else if (o.cls === 'Drain') c = '#22c55e'; else c = ro.items.length ? '#22c55e' : '#cbd5e1'; } led.setAttribute('fill', c); }
+      if (led) { let c = '#cbd5e1'; if (ro) { const w = ro.items.some(i => i.st === 'work'), b = ro.items.some(i => i.st === 'ready'); if (o.cls === 'Station' || o.cls === 'ParallelStation') c = w ? '#22c55e' : b ? '#facc15' : '#cbd5e1'; else if (o.cls === 'Source') c = ro.items.length ? '#facc15' : '#22c55e'; else if (o.cls === 'Drain') c = '#22c55e'; else c = ro.items.length ? '#22c55e' : '#cbd5e1'; } led.setAttribute('fill', c); }
       if (cnt) {
         let t = '';
-        if (ro) { if (o.cls === 'Drain') t = `${ro.st.in}개 도착`; else if (o.cls === 'Source') t = `${ro.st.created}개 생성${ro.st.lost ? ` · ${ro.st.lost} 소멸` : ''}`; else if (o.cls === 'Buffer' || o.cls === 'Sorter' || o.cls === 'Line') t = `${ro.items.length}/${(+o.cap < 0 || o.cap === '') ? '∞' : o.cap}`; else if (o.cls === 'ParallelProc') t = `${ro.items.length}/${ro.n}`; }
-        else { if (o.cls === 'Buffer' || o.cls === 'Sorter') t = `용량 ${(+o.cap < 0) ? '∞' : o.cap}`; if (o.cls === 'ParallelProc') t = `${o.xdim}×${o.ydim}`; }
+        if (ro) { if (o.cls === 'Drain') t = `${ro.st.in}개 도착`; else if (o.cls === 'Source') t = `${ro.st.created}개 생성${ro.st.lost ? ` · ${ro.st.lost} 소멸` : ''}`; else if (o.cls === 'Buffer' || o.cls === 'Sorter' || o.cls === 'Conveyor') t = `${ro.items.length}/${(+o.cap < 0 || o.cap === '') ? '∞' : o.cap}`; else if (o.cls === 'ParallelStation') t = `${ro.items.length}/${ro.n}`; }
+        else { if (o.cls === 'Buffer' || o.cls === 'Sorter') t = `용량 ${(+o.cap < 0) ? '∞' : o.cap}`; if (o.cls === 'ParallelStation') t = `${o.xdim}×${o.ydim}`; }
         cnt.textContent = t;
       }
       if (mu) { let h = ''; if (ro && ro.items.length) { const k = Math.min(ro.items.length, 6); for (let i = 0; i < k; i++) { const it = ro.items[i]; h += `<rect x="${IW - 4 - i * 7}" y="${IW - 12}" width="9" height="9" rx="1.5" fill="${MU_COLOR(it.mu.name)}" stroke="${it.st === 'ready' && o.cls !== 'Buffer' && o.cls !== 'Sorter' ? '#facc15' : '#0b1726'}" stroke-width="1.2"/>`; } } mu.innerHTML = h; }
@@ -273,7 +281,7 @@
   }
   function connect(a, b) {
     const A = S.model.objects[a], B = S.model.objects[b];
-    if (!PS.MATERIAL.has(A.cls) || !PS.MATERIAL.has(B.cls)) { alert('Connector 는 물류 객체(Source, Buffer, SingleProc …)끼리만 연결해요. Method 는 Controls 탭에서 지정합니다.'); return false; }
+    if (!PS.MATERIAL.has(A.cls) || !PS.MATERIAL.has(B.cls)) { alert('Connector 는 물류 객체(Source, Buffer, Station …)끼리만 연결해요. Method 는 Controls 탭에서 지정합니다.'); return false; }
     if (A.cls === 'Drain') { alert('Drain 에서는 MU 가 나가지 않아요 (Drain → … 연결 불가).'); return false; }
     if (B.cls === 'Source') { alert('Source 로는 MU 가 들어갈 수 없어요.'); return false; }
     if (S.model.connectors.some(c => c[0] === a && c[1] === b)) return false;
@@ -311,7 +319,7 @@
   const el = (h) => { const t = document.createElement('div'); t.innerHTML = h; return t; };
   function row(label, ctrl, hint) { const r = document.createElement('div'); r.className = 'fr'; r.innerHTML = `<label>${label}</label>`; const c = document.createElement('div'); if (typeof ctrl === 'string') c.innerHTML = ctrl; else c.append(ctrl); if (hint) c.insertAdjacentHTML('beforeend', `<div class="hint" style="font-size:11.5px;color:#64748b;margin-top:2px">${hint}</div>`); r.append(c); return r; }
   const methodNames = () => Object.entries(S.model.objects).filter(([, o]) => o.cls === 'Method').map(([n]) => n);
-  const tableNames = () => Object.entries(S.model.objects).filter(([, o]) => o.cls === 'TableFile').map(([n]) => n);
+  const tableNames = () => Object.entries(S.model.objects).filter(([, o]) => o.cls === 'DataTable').map(([n]) => n);
 
   /* 분포 편집기: Plant Sim 처럼 [분포 ▾] + 시간 칸 (mm:ss) */
   function distEditor(d, opt = {}) {
@@ -364,13 +372,13 @@
       const sim = S.sim; if (!sim || !sim.O[name]) { w.innerHTML = '<p style="color:#64748b">시뮬레이션을 시작하면 통계가 보여요. (통계 시작 시각 = EventController 의 Statistics start)</p>'; return; }
       const r = sim.stats().objects[name], pct = x => (x * 100).toFixed(2) + ' %';
       let h = `<table class="grid-t"><tr><th>통계</th><th>값</th></tr><tr><td style="padding:2px 6px">StatNumIn</td><td style="padding:2px 6px">${r.in}</td></tr><tr><td style="padding:2px 6px">StatNumOut</td><td style="padding:2px 6px">${r.out}</td></tr>`;
-      if (r.work != null && (o.cls === 'SingleProc' || o.cls === 'ParallelProc')) h += `<tr><td style="padding:2px 6px">Working</td><td style="padding:2px 6px">${pct(r.work)}</td></tr><tr><td style="padding:2px 6px">Waiting</td><td style="padding:2px 6px">${pct(r.wait)}</td></tr><tr><td style="padding:2px 6px">Blocked</td><td style="padding:2px 6px">${pct(r.blocked)}</td></tr>`;
+      if (r.work != null && (o.cls === 'Station' || o.cls === 'ParallelStation')) h += `<tr><td style="padding:2px 6px">Working</td><td style="padding:2px 6px">${pct(r.work)}</td></tr><tr><td style="padding:2px 6px">Waiting</td><td style="padding:2px 6px">${pct(r.wait)}</td></tr><tr><td style="padding:2px 6px">Blocked</td><td style="padding:2px 6px">${pct(r.blocked)}</td></tr>`;
       if (r.avg != null) h += `<tr><td style="padding:2px 6px">평균 내용물 (시간가중)</td><td style="padding:2px 6px">${r.avg.toFixed(4)}</td></tr><tr><td style="padding:2px 6px">최대 내용물</td><td style="padding:2px 6px">${r.max}</td></tr><tr><td style="padding:2px 6px">비어 있지 않은 비율</td><td style="padding:2px 6px">${pct(r.work)}</td></tr>`;
       if (o.cls === 'Drain') h += `<tr><td style="padding:2px 6px">Average lifespan (statAvgLifeSpan)</td><td style="padding:2px 6px">${ft(r.life)} (${r.life.toFixed(2)} 초)</td></tr><tr><td style="padding:2px 6px">Throughput per hour</td><td style="padding:2px 6px">${r.thru.toFixed(4)}</td></tr>`;
       if (o.cls === 'Source') h += `<tr><td style="padding:2px 6px">생성한 MU</td><td style="padding:2px 6px">${r.created}</td></tr><tr><td style="padding:2px 6px">소멸 (Non-blocking)</td><td style="padding:2px 6px">${r.lost}</td></tr>`;
       if (o.cls === 'Variable') h += `<tr><td style="padding:2px 6px">현재 값</td><td style="padding:2px 6px">${r.value}</td></tr><tr><td style="padding:2px 6px">시간가중 평균</td><td style="padding:2px 6px">${(+r.mean).toFixed(4)}</td></tr><tr><td style="padding:2px 6px">최소 / 최대</td><td style="padding:2px 6px">${r.min} / ${r.max}</td></tr>`;
       h += '</table>';
-      if (o.cls === 'SingleProc' || o.cls === 'ParallelProc') h += `<div class="statbar"><i style="width:${r.work * 100}%;background:#22c55e"></i><i style="width:${r.wait * 100}%;background:#cbd5e1"></i><i style="width:${r.blocked * 100}%;background:#facc15"></i></div><div class="legend-s"><span><i style="background:#22c55e"></i>Working</span><span><i style="background:#cbd5e1"></i>Waiting</span><span><i style="background:#facc15"></i>Blocked</span></div>`;
+      if (o.cls === 'Station' || o.cls === 'ParallelStation') h += `<div class="statbar"><i style="width:${r.work * 100}%;background:#22c55e"></i><i style="width:${r.wait * 100}%;background:#cbd5e1"></i><i style="width:${r.blocked * 100}%;background:#facc15"></i></div><div class="legend-s"><span><i style="background:#22c55e"></i>Working</span><span><i style="background:#cbd5e1"></i>Waiting</span><span><i style="background:#facc15"></i>Blocked</span></div>`;
       if (o.cls === 'Drain' && Object.keys(r.byType).length) h += `<h4 style="margin:12px 0 4px">Type statistics</h4><table class="grid-t"><tr><th>MU</th><th>개수</th><th>평균 체류</th></tr>${Object.entries(r.byType).map(([k, b]) => `<tr><td style="padding:2px 6px">${esc(k)}</td><td style="padding:2px 6px">${b.n}</td><td style="padding:2px 6px">${ft(b.life / b.n)}</td></tr>`).join('')}</table>`;
       w.innerHTML = h + `<p style="font-size:11.5px;color:#64748b">측정 구간 ${ft(sim.t - sim.t0, true)} (시뮬레이션 시각 ${ft(sim.t, true)})</p>`;
     };
@@ -383,7 +391,7 @@
   function openDialog(name, opt = {}) {
     const o = S.model.objects[name]; if (!o) return;
     if (o.cls === 'Method') return openMethod(name, opt);
-    if (o.cls === 'TableFile') return openTable(name);
+    if (o.cls === 'DataTable') return openTable(name);
     if (o.cls === 'EventController') return openEC(name);
     if (o.cls === 'ExperimentManager') return openEM(name);
     const { h, i: nmIn } = nameHead(name), tabs = [], getters = [];
@@ -394,18 +402,18 @@
       const ms = el(`<select>${['Constant', 'Sequence', 'Percentage'].map(x => `<option ${x === o.musel ? 'selected' : ''}>${x}</option>`).join('')}</select>`).firstChild;
       const mu = el(`<select>${Object.keys(S.model.mus).map(x => `<option value="${esc(x)}" ${x === o.mu ? 'selected' : ''}>.MUs.${esc(x)}</option>`).join('')}</select>`).firstChild;
       const tb = el(`<select><option value=""></option>${tableNames().map(x => `<option ${x === o.table ? 'selected' : ''}>${esc(x)}</option>`).join('')}</select>`).firstChild;
-      const muRow = row('MU', mu), tbRow = row('Table', tb, 'TableFile: 1열 MU 경로(.MUs.myEntity1), 2열 Frequency(비율)');
+      const muRow = row('MU', mu), tbRow = row('Table', tb, 'DataTable: 1열 MU 경로(.MUs.myEntity1), 2열 Frequency(비율)');
       const vis = () => { muRow.style.display = ms.value === 'Constant' ? '' : 'none'; tbRow.style.display = ms.value === 'Constant' ? 'none' : ''; }; ms.onchange = vis; vis();
       P('Attributes', [row('Operating mode', mode, '켜면 Blocking: 뒤가 막히면 Source 도 기다림 · 끄면 만든 MU 를 버림(손님 이탈)'), row('Time of creation', '<span>Interval adaptable</span>'), row('Interval', iv, '시간은 Plant Sim 형식: 6:00 = 6분, 1:00:00 = 1시간, 숫자만 = 초'), row('Start', st), row('Stop', sp, '비우면 끝까지'), row('Amount', am, '비우면 무제한'), row('MU selection', ms), muRow, tbRow]);
       getters.push(() => { o.mode = $('input', mode).checked ? 'blocking' : 'non-blocking'; o.interval = iv.value; o.start = pt(st.value) || 0; o.stop = sp.value.trim() === '' ? '' : pt(sp.value); o.amount = am.value; o.musel = ms.value; o.mu = mu.value; o.table = tb.value; });
     }
-    if (o.cls === 'ParallelProc') { const x = el(`<input type="number" min="1" value="${o.xdim}" style="width:80px">`).firstChild, y = el(`<input type="number" min="1" value="${o.ydim}" style="width:80px">`).firstChild; P('Attributes', [row('X-dimension', x, '예제 4: 점원 수 k'), row('Y-dimension', y), row('', '<span style="color:#64748b">자리 수 = X × Y</span>')]); getters.push(() => { o.xdim = Math.max(1, +x.value || 1); o.ydim = Math.max(1, +y.value || 1); }); }
-    if (o.cls === 'SingleProc' || o.cls === 'ParallelProc') { const pe = distEditor(o.procTime, { listType: true }); P('Times', [row('Processing time', pe, 'List(Type): MU 이름별로 다른 처리시간'), row('Set-up time', '<span style="color:#94a3b8">0 (이 연습장에선 생략)</span>')]); getters.push(() => { o.procTime = pe.value; }); }
+    if (o.cls === 'ParallelStation') { const x = el(`<input type="number" min="1" value="${o.xdim}" style="width:80px">`).firstChild, y = el(`<input type="number" min="1" value="${o.ydim}" style="width:80px">`).firstChild; P('Attributes', [row('X-dimension', x, '예제 4: 점원 수 k'), row('Y-dimension', y), row('', '<span style="color:#64748b">자리 수 = X × Y</span>')]); getters.push(() => { o.xdim = Math.max(1, +x.value || 1); o.ydim = Math.max(1, +y.value || 1); }); }
+    if (o.cls === 'Station' || o.cls === 'ParallelStation') { const pe = distEditor(o.procTime, { listType: true }); P('Times', [row('Processing time', pe, 'List(Type): MU 이름별로 다른 처리시간'), row('Set-up time', '<span style="color:#94a3b8">0 (이 연습장에선 생략)</span>')]); getters.push(() => { o.procTime = pe.value; }); }
     if (o.cls === 'Buffer') { const c = el(`<input type="number" value="${o.cap}" style="width:90px">`).firstChild, dw = timeIn(o.dwell), bt = el(`<select>${['Queue', 'Stack'].map(x => `<option ${x === o.btype ? 'selected' : ''}>${x}</option>`).join('')}</select>`).firstChild;
       P('Attributes', [row('Capacity', c, '-1 = 무한'), row('Processing time', dw, '버퍼 안에서 최소로 머무는 시간 (보통 0)'), row('Buffer type', bt, 'Queue = 먼저 온 것 먼저(FIFO) · Stack = 나중 온 것 먼저(LIFO)')]); getters.push(() => { o.cap = c.value === '' ? -1 : +c.value; o.dwell = pt(dw.value) || 0; o.btype = bt.value; }); }
     if (o.cls === 'Sorter') { const c = el(`<input type="number" value="${o.cap}" style="width:90px">`).firstChild, at = el(`<input type="text" value="${esc(o.sortAttr)}" placeholder="예: aNoRecipes">`).firstChild, od = el(`<select><option value="ascending" ${o.order === 'ascending' ? 'selected' : ''}>Ascending (작은 값 먼저)</option><option value="descending" ${o.order === 'descending' ? 'selected' : ''}>Descending (큰 값 먼저)</option></select>`).firstChild;
       P('Attributes', [row('Capacity', c, '-1 = 무한')]); P('Sort', [row('Order: Sort criterion', '<span>MU attribute</span>'), row('Attribute', at, 'MU 의 사용자 정의 속성 이름'), row('Sorting order', od)]); getters.push(() => { o.cap = c.value === '' ? -1 : +c.value; o.sortAttr = at.value.trim(); o.order = od.value; }); }
-    if (o.cls === 'Line') { const L = el(`<input type="number" step="any" value="${o.length}" style="width:90px">`).firstChild, sp = el(`<input type="number" step="any" value="${o.speed}" style="width:90px">`).firstChild, c = el(`<input type="number" value="${o.cap}" style="width:90px">`).firstChild;
+    if (o.cls === 'Conveyor') { const L = el(`<input type="number" step="any" value="${o.length}" style="width:90px">`).firstChild, sp = el(`<input type="number" step="any" value="${o.speed}" style="width:90px">`).firstChild, c = el(`<input type="number" value="${o.cap}" style="width:90px">`).firstChild;
       P('Attributes', [row('Length (m)', L), row('Speed (m/s)', sp), row('Capacity', c), row('', '<span style="color:#64748b">이동시간 = 길이 ÷ 속도</span>')]); getters.push(() => { o.length = +L.value; o.speed = +sp.value || 1; o.cap = +c.value; }); }
     if (o.cls === 'Variable') { const dt = el(`<select>${['integer', 'real', 'string', 'boolean', 'time'].map(x => `<option ${x === o.dtype ? 'selected' : ''}>${x}</option>`).join('')}</select>`).firstChild, v = el(`<input type="text" value="${esc(o.value)}">`).firstChild;
       P('Value', [row('Data type', dt), row('Value (초깃값)', v, 'Reset 할 때 이 값으로 돌아가요')]); getters.push(() => { o.dtype = dt.value; o.value = PS.castVar(v.value, dt.value); }); }
@@ -437,7 +445,7 @@
     const w = document.createElement('div'); w.append(row('Icon 색', col), row('User-defined attributes', tw, '모든 MU 가 가질 속성 (예: aNoRecipes = 1). 파생한 MU 는 값만 바꿔 쓰면 돼요.'));
     const foot = document.createDocumentFragment();
     dialog({ title: n, path: `.MUs.${n}${m.base ? '  (' + m.base + ' 에서 파생)' : ''}`, head: h, tabs: [['User-defined Attributes', w]], key: 'mu:' + n, onApply: () => {
-      const nn = nmIn.value.trim(); if (nn !== n) { if (!validName(nn) || S.model.mus[nn] || S.model.objects[nn]) { alert('쓸 수 없는 이름이에요'); return false; } S.model.mus[nn] = m; delete S.model.mus[n]; Object.values(S.model.objects).forEach(o => { if (o.mu === n) o.mu = nn; if (o.cls === 'TableFile') o.rows.forEach(r => { if (String(r[0]).split('.').pop() === n) r[0] = '.MUs.' + nn; }); }); n = nn; }
+      const nn = nmIn.value.trim(); if (nn !== n) { if (!validName(nn) || S.model.mus[nn] || S.model.objects[nn]) { alert('쓸 수 없는 이름이에요'); return false; } S.model.mus[nn] = m; delete S.model.mus[n]; Object.values(S.model.objects).forEach(o => { if (o.mu === n) o.mu = nn; if (o.cls === 'DataTable') o.rows.forEach(r => { if (String(r[0]).split('.').pop() === n) r[0] = '.MUs.' + nn; }); }); n = nn; }
       m.attrs = attrs.filter(a => a.name.trim()).map(a => ({ name: a.name.trim(), type: a.type, value: PS.castVar(a.value, a.type) })); m.color = col.value; S.changed('mu'); return true; } });
   }
 
@@ -462,7 +470,7 @@
     setTimeout(() => ta.focus(), 30);
   }
 
-  /* TableFile */
+  /* DataTable */
   function openTable(name) {
     const o = S.model.objects[name]; const { h, i: nmIn } = nameHead(name);
     const cols = clone(o.cols), rows = clone(o.rows);
@@ -479,7 +487,7 @@
     };
     w.paintLive = () => { if (S.sim && S.sim.tables[name]) draw(S.sim.tables[name].rows); };
     if (S.sim && S.sim.tables[name]) draw(S.sim.tables[name].rows); else draw();
-    dialog({ title: name, path: `.Models.Frame.${name}  (TableFile)`, head: h, tabs: [['Table', w]], big: true, key: name, onApply: () => { if (S.sim && !confirm('표를 바꾸면 Reset 돼요. 계속할까요?')) return false; const nn = nmIn.value.trim(); let cur = name; if (nn !== name) { if (!renameObject(name, nn)) return false; cur = nn; } o.cols = cols; o.rows = rows.map(r => r.map((v, j) => cols[j] && ['integer', 'real'].includes(cols[j].type) && v !== '' ? +v : v)); S.changed('edit:' + cur); return true; } });
+    dialog({ title: name, path: `.Models.Frame.${name}  (DataTable)`, head: h, tabs: [['Table', w]], big: true, key: name, onApply: () => { if (S.sim && !confirm('표를 바꾸면 Reset 돼요. 계속할까요?')) return false; const nn = nmIn.value.trim(); let cur = name; if (nn !== name) { if (!renameObject(name, nn)) return false; cur = nn; } o.cols = cols; o.rows = rows.map(r => r.map((v, j) => cols[j] && ['integer', 'real'].includes(cols[j].type) && v !== '' ? +v : v)); S.changed('edit:' + cur); return true; } });
   }
 
   /* EventController */

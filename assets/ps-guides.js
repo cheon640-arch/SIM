@@ -18,15 +18,15 @@
     return api;
   }
   const neg = s => ({ t: 'Negexp', beta: s }), cst = s => ({ t: 'Const', v: s }), uni = (a, b) => ({ t: 'Uniform', a, b });
-  const coffee = () => B().add('Source', 'Source', 120, 160, { interval: neg(6 * MIN) }).add('Buffer', 'Buffer', 240, 160, { cap: -1 }).add('TakeOrder', 'SingleProc', 360, 160, { procTime: neg(3 * MIN) }).add('Drain', 'Drain', 480, 160).con('Source', 'Buffer', 'TakeOrder', 'Drain').end(30 * DAY);
+  const coffee = () => B().add('Source', 'Source', 120, 160, { interval: neg(6 * MIN) }).add('Buffer', 'Buffer', 240, 160, { cap: -1 }).add('TakeOrder', 'Station', 360, 160, { procTime: neg(3 * MIN) }).add('Drain', 'Drain', 480, 160).con('Source', 'Buffer', 'TakeOrder', 'Drain').end(30 * DAY);
   const recipes = () => {
     const b = coffee(); const at = v => [{ name: 'aNoRecipes', type: 'integer', value: v }, { name: 'aArrTime', type: 'real', value: 0 }];
     b.mu('myEntity', at(0), '#64748b').mu('myEntity1', at(1), '#0075de', 'myEntity').mu('myEntity2', at(2), '#f64932', 'myEntity').mu('myEntity3', at(3), '#ffb110', 'myEntity');
-    b.add('tbEntity', 'TableFile', 120, 300, { cols: [{ name: 'MU', type: 'object' }, { name: 'Frequency', type: 'real' }], rows: [['.MUs.myEntity1', .5], ['.MUs.myEntity2', .3], ['.MUs.myEntity3', .2]] });
+    b.add('tbEntity', 'DataTable', 120, 300, { cols: [{ name: 'MU', type: 'object' }, { name: 'Frequency', type: 'real' }], rows: [['.MUs.myEntity1', .5], ['.MUs.myEntity2', .3], ['.MUs.myEntity3', .2]] });
     const o = b.m.objects; o.Source.musel = 'Percentage'; o.Source.table = 'tbEntity';
     o.TakeOrder.procTime = { t: 'ListType', list: { myEntity1: neg(3 * MIN), myEntity2: neg(4 * MIN), myEntity3: neg(5 * MIN) } };
     b.add('vWIP', 'Variable', 240, 300, { dtype: 'integer', value: 0 });
-    b.add('tbSystemLog', 'TableFile', 360, 300, { cols: [{ name: 'Name', type: 'string' }, { name: 'Arrival', type: 'real' }, { name: 'Departure', type: 'real' }, { name: 'TimeInSystem', type: 'real' }], rows: [] });
+    b.add('tbSystemLog', 'DataTable', 360, 300, { cols: [{ name: 'Name', type: 'string' }, { name: 'Arrival', type: 'real' }, { name: 'Departure', type: 'real' }, { name: 'TimeInSystem', type: 'real' }], rows: [] });
     b.add('mCustArrival', 'Method', 240, 400, { code: '-- Buffer 의 Entrance control\nvWIP += 1\n@.aArrTime := EventController.SimTime' });
     b.add('mLeaveSys', 'Method', 480, 400, { code: '-- Drain 의 Entrance control\nvWIP -= 1\ntbSystemLog.writeRow(1, tbSystemLog.yDim + 1, @.Name, @.aArrTime, EventController.SimTime, EventController.SimTime - @.aArrTime)' });
     b.add('Init', 'Method', 120, 400, { code: '-- Init 버튼/시작 때 자동 실행\ntbSystemLog.delete' });
@@ -35,19 +35,19 @@
   };
   const EX = [
     { id: 'coffee', title: '커피 부스 (1장)', build: () => coffee().m },
-    { id: 'recipes', title: '수정된 커피 부스 — MU·TableFile·Method (2장 예제1)', build: () => recipes().m },
-    { id: 'block', title: '버퍼와 블로킹 (2장)', build: () => B().add('Source', 'Source', 100, 160, { interval: neg(75) }).add('S1', 'SingleProc', 220, 160, { procTime: neg(60) }).add('Buffer', 'Buffer', 340, 160, { cap: 2 }).add('S2', 'SingleProc', 460, 160, { procTime: neg(60) }).add('Drain', 'Drain', 580, 160).con('Source', 'S1', 'Buffer', 'S2', 'Drain').end(5 * DAY).m },
-    { id: 'mill', title: '밀링 병목 → 밀링기 추가 (2장 예제2)', build: () => B().add('Source', 'Source', 100, 180, { interval: neg(5 * MIN) }).add('CutToSize', 'SingleProc', 220, 180, { procTime: uni(3 * MIN, 5 * MIN) }).add('Milling', 'SingleProc', 360, 120, { procTime: uni(5 * MIN, 7 * MIN) }).add('Milling2', 'SingleProc', 360, 240, { procTime: cst(3 * MIN) }).add('Drain', 'Drain', 500, 180).con('Source', 'CutToSize', 'Milling', 'Drain').con('CutToSize', 'Milling2', 'Drain').end(2 * DAY).m },
-    { id: 'drive', title: '드라이브스루 k 최적화 — ExperimentManager (2장 예제4)', build: () => { const b = B().add('Source', 'Source', 100, 160, { interval: neg(6 * MIN), mode: 'non-blocking' }).add('Buffer', 'Buffer', 220, 160, { cap: 5 }).add('Window', 'ParallelProc', 340, 160, { xdim: 1, procTime: neg(8 * MIN) }).add('Drain', 'Drain', 460, 160).con('Source', 'Buffer', 'Window', 'Drain').end(30 * DAY);
+    { id: 'recipes', title: '수정된 커피 부스 — MU·DataTable·Method (2장 예제1)', build: () => recipes().m },
+    { id: 'block', title: '버퍼와 블로킹 (2장)', build: () => B().add('Source', 'Source', 100, 160, { interval: neg(75) }).add('S1', 'Station', 220, 160, { procTime: neg(60) }).add('Buffer', 'Buffer', 340, 160, { cap: 2 }).add('S2', 'Station', 460, 160, { procTime: neg(60) }).add('Drain', 'Drain', 580, 160).con('Source', 'S1', 'Buffer', 'S2', 'Drain').end(5 * DAY).m },
+    { id: 'mill', title: '밀링 병목 → 밀링기 추가 (2장 예제2)', build: () => B().add('Source', 'Source', 100, 180, { interval: neg(5 * MIN) }).add('CutToSize', 'Station', 220, 180, { procTime: uni(3 * MIN, 5 * MIN) }).add('Milling', 'Station', 360, 120, { procTime: uni(5 * MIN, 7 * MIN) }).add('Milling2', 'Station', 360, 240, { procTime: cst(3 * MIN) }).add('Drain', 'Drain', 500, 180).con('Source', 'CutToSize', 'Milling', 'Drain').con('CutToSize', 'Milling2', 'Drain').end(2 * DAY).m },
+    { id: 'drive', title: '드라이브스루 k 최적화 — ExperimentManager (2장 예제4)', build: () => { const b = B().add('Source', 'Source', 100, 160, { interval: neg(6 * MIN), mode: 'non-blocking' }).add('Buffer', 'Buffer', 220, 160, { cap: 5 }).add('Window', 'ParallelStation', 340, 160, { xdim: 1, procTime: neg(8 * MIN) }).add('Drain', 'Drain', 460, 160).con('Source', 'Buffer', 'Window', 'Drain').end(30 * DAY);
       b.add('vProfitPerMonth', 'Variable', 100, 300, { dtype: 'real' }).add('vCostForHiring', 'Variable', 100, 360, { dtype: 'real' }).add('vTotalProfit', 'Variable', 100, 420, { dtype: 'real' });
       b.add('EndSim', 'Method', 340, 320, { code: '-- 종료 시 자동 실행 (예약 이름 EndSim)\nvProfitPerMonth := 3 * Drain.StatNumIn\nvCostForHiring := 4000 * Window.XDim + 500 * 6\nvTotalProfit := vProfitPerMonth - vCostForHiring' });
       b.add('ExperimentManager', 'ExperimentManager', 460, 320, { outputs: ['vTotalProfit'], inputs: ['Window.XDim', 'Buffer.Capacity'], exps: [[1, 5], [2, 4], [3, 3], [4, 2]], obs: 5 }); return b.m; } },
     { id: 'pipe', title: '파이프 절단·굽힘·청동 (2장 예제5)', build: () => B().add('Source', 'Source', 80, 180, { interval: neg(15 * MIN) }).add('bf01', 'Buffer', 180, 180, { cap: -1 }).add('FC', 'FlowControl', 280, 180, { exit: { strategy: 'percentage', blocking: false, pct: [70, 30], attr: '' } })
-      .add('bfCut', 'Buffer', 380, 100, { cap: -1 }).add('Cutting', 'SingleProc', 480, 100, { procTime: { t: 'Lognorm', mu: 10 * MIN, sigma: 5 * MIN } }).add('bfBend', 'Buffer', 380, 260, { cap: -1 }).add('Bending', 'SingleProc', 480, 260, { procTime: { t: 'Lognorm', mu: 20 * MIN, sigma: 5 * MIN } })
-      .add('bfBronze', 'Buffer', 600, 260, { cap: 10 }).add('Bronzing', 'ParallelProc', 700, 260, { xdim: 3, procTime: { t: 'Triangle', c: 20 * MIN, a: 10 * MIN, b: 30 * MIN } }).add('Drain', 'Drain', 800, 260)
+      .add('bfCut', 'Buffer', 380, 100, { cap: -1 }).add('Cutting', 'Station', 480, 100, { procTime: { t: 'Lognorm', mu: 10 * MIN, sigma: 5 * MIN } }).add('bfBend', 'Buffer', 380, 260, { cap: -1 }).add('Bending', 'Station', 480, 260, { procTime: { t: 'Lognorm', mu: 20 * MIN, sigma: 5 * MIN } })
+      .add('bfBronze', 'Buffer', 600, 260, { cap: 10 }).add('Bronzing', 'ParallelStation', 700, 260, { xdim: 3, procTime: { t: 'Triangle', c: 20 * MIN, a: 10 * MIN, b: 30 * MIN } }).add('Drain', 'Drain', 800, 260)
       .con('Source', 'bf01', 'FC', 'bfCut', 'Cutting', 'bfBend').con('FC', 'bfBend', 'Bending', 'bfBronze', 'Bronzing', 'Drain').end(10 * DAY).m },
-    { id: 'route', title: 'Exit control 로 타입별 라우팅 (5장)', build: () => B().mu('PartA', [], '#0075de').mu('PartB', [], '#f64932').add('tbMix', 'TableFile', 100, 300, { cols: [{ name: 'MU', type: 'object' }, { name: 'Frequency', type: 'real' }], rows: [['.MUs.PartA', .6], ['.MUs.PartB', .4]] })
-      .add('Source', 'Source', 100, 170, { interval: neg(2 * MIN), musel: 'Percentage', table: 'tbMix' }).add('Buffer', 'Buffer', 220, 170, { cap: -1, exitCtrl: 'mRoute' }).add('StationA', 'SingleProc', 360, 100, { procTime: neg(2.5 * MIN) }).add('StationB', 'SingleProc', 360, 240, { procTime: neg(3 * MIN) }).add('Drain', 'Drain', 500, 170)
+    { id: 'route', title: 'Exit control 로 타입별 라우팅 (5장)', build: () => B().mu('PartA', [], '#0075de').mu('PartB', [], '#f64932').add('tbMix', 'DataTable', 100, 300, { cols: [{ name: 'MU', type: 'object' }, { name: 'Frequency', type: 'real' }], rows: [['.MUs.PartA', .6], ['.MUs.PartB', .4]] })
+      .add('Source', 'Source', 100, 170, { interval: neg(2 * MIN), musel: 'Percentage', table: 'tbMix' }).add('Buffer', 'Buffer', 220, 170, { cap: -1, exitCtrl: 'mRoute' }).add('StationA', 'Station', 360, 100, { procTime: neg(2.5 * MIN) }).add('StationB', 'Station', 360, 240, { procTime: neg(3 * MIN) }).add('Drain', 'Drain', 500, 170)
       .add('mRoute', 'Method', 220, 320, { code: '-- Buffer 의 Exit control: 타입별로 보낼 곳을 정함\nif @.Name = "PartA"\n  @.move(StationA)\nelse\n  @.move(StationB)\nend' })
       .con('Source', 'Buffer', 'StationA', 'Drain').con('Buffer', 'StationB', 'Drain').end(DAY).m },
 
@@ -59,21 +59,21 @@
     const ST = [['WStrip', 65, 56, 69], ['Assy1', 78, 61, 53], ['Bezel', 60, 75, 65], ['D_A', 71, 0, 0], ['E_B', 0, 53, 0], ['F_C', 0, 0, 75], ['Assy3', 75, 62, 60], ['Assy4', 63, 56, 69], ['J_A', 78, 0, 0], ['K_B', 0, 75, 0], ['L_C', 0, 0, 65], ['Inspect', 75, 56, 75]];
     const T = ['A', 'B', 'C'], b = B();
     b.mu('A', [{ name: 'aStep', type: 'integer', value: 0 }], '#0075de').mu('B', [{ name: 'aStep', type: 'integer', value: 0 }], '#f64932').mu('C', [{ name: 'aStep', type: 'integer', value: 0 }], '#ffb110');
-    b.add('tbMix', 'TableFile', 80, 440, { cols: [{ name: 'MU', type: 'object' }, { name: 'Frequency', type: 'real' }], rows: [['.MUs.A', .56], ['.MUs.B', .22], ['.MUs.C', .22]] });
+    b.add('tbMix', 'DataTable', 80, 440, { cols: [{ name: 'MU', type: 'object' }, { name: 'Frequency', type: 'real' }], rows: [['.MUs.A', .56], ['.MUs.B', .22], ['.MUs.C', .22]] });
     b.add('Source', 'Source', 60, 140, { interval: cst(60), musel: 'Percentage', table: 'tbMix' });
     const dist = v => v ? { t: 'Normal', mu: v, sigma: v * .1, lo: 0, hi: Infinity } : cst(0);
     const pos = i => [180 + (i % 6) * (mode === 'tobe' ? 150 : 120), i < 6 ? 140 : 300];
     ST.forEach(([n, a, bb, c], i) => {
       const [x, y] = pos(i);
       if (mode === 'tobe') b.add('bf_' + n, 'Buffer', x - 60, y, { cap: 2 });
-      b.add(n, 'SingleProc', x, y, { procTime: { t: 'ListType', list: { A: dist(a), B: dist(bb), C: dist(c) } } });
+      b.add(n, 'Station', x, y, { procTime: { t: 'ListType', list: { A: dist(a), B: dist(bb), C: dist(c) } } });
     });
     b.add('Drain', 'Drain', mode === 'tobe' ? 1080 : 900, 300);
     if (mode === 'asis') { b.con('Source', ...ST.map(r => r[0]), 'Drain'); b.end(8 * HOUR); b.m.ec.statStart = 30 * MIN; return b.m; }
     // TO-BE: 타입별 경로표 + 공통 Exit control 메서드 (AMR 이 필요한 스테이션만 방문하는 것을 근사)
     const routes = T.map((_, k) => ST.filter(r => r[k + 1] > 0).map(r => r[0]));
     const nRows = Math.max(...routes.map(r => r.length));
-    b.add('tbRoute', 'TableFile', 220, 440, { cols: T.map(t => ({ name: t, type: 'string' })), rows: Array.from({ length: nRows + 1 }, (_, i) => routes.map(r => r[i] || '')) });
+    b.add('tbRoute', 'DataTable', 220, 440, { cols: T.map(t => ({ name: t, type: 'string' })), rows: Array.from({ length: nRows + 1 }, (_, i) => routes.map(r => r[i] || '')) });
     b.add('Comment', 'Comment', 520, 440, { text: '스테이션 사이 이동은 mNext 의 @.move 가 결정 (Connector 없음)' });
     b.add('mNext', 'Method', 360, 440, { code: '-- Source 와 모든 스테이션의 Exit control\n-- tbRoute[타입, 순서] 에서 다음 스테이션을 찾아 그 앞 버퍼로 보냄\nvar nxt : string\nnxt := tbRoute[@.Name, @.aStep + 1]\nif nxt = ""\n  @.move(Drain)\nelse\n  if @.move(str_to_obj("bf_" + nxt))\n    @.aStep += 1\n  end\nend' });
     b.m.objects.Source.exitCtrl = 'mNext';
@@ -104,7 +104,7 @@
       steps: [
         { t: '도구 상자 <b>Material Flow</b> 탭(또는 왼쪽 Class Library 의 MaterialFlow)에서 <b>Source</b> 를 Frame 으로 끌어다 놓으세요.', ok: m => has(m, 'Source') },
         { t: '<b>Buffer</b> 를 Source 오른쪽에 놓으세요. (주차장 대기 줄)', ok: m => has(m, 'Buffer') },
-        { t: '<b>SingleProc</b> 를 놓고 더블클릭 → Name 칸에 <code>TakeOrder</code> 입력 → OK.', hint: '대화상자 맨 위 Name 칸이 객체 이름이에요. SimTalk 에서도 이 이름으로 불러요.', ok: m => m.objects.TakeOrder && m.objects.TakeOrder.cls === 'SingleProc' },
+        { t: '<b>Station</b> 를 놓고 더블클릭 → Name 칸에 <code>TakeOrder</code> 입력 → OK.', hint: '대화상자 맨 위 Name 칸이 객체 이름이에요. SimTalk 에서도 이 이름으로 불러요.', ok: m => m.objects.TakeOrder && m.objects.TakeOrder.cls === 'Station' },
         { t: '<b>Drain</b> 을 놓으세요.', ok: m => has(m, 'Drain') },
         { t: '도구 상자의 <b>Connector</b> 를 클릭한 다음 Source → Buffer → TakeOrder → Drain 순서로 클릭해 연결하세요. (Ctrl 을 누른 채 클릭하면 이어서 연결, Esc 로 끝)', hint: 'Connector 는 MU 가 흐르는 방향이에요. 화살표가 Drain 쪽을 향해야 해요.', ok: m => { const s = one(m, 'Source'), b = one(m, 'Buffer'), d = one(m, 'Drain'); return s && b && d && path(m, [s, b, 'TakeOrder', d]); } },
         { t: 'Source 더블클릭 → Attributes 탭 → <b>Interval</b> 을 <code>Negexp</code>, Beta = <code>6:00</code> (6분) 으로.', hint: 'Plant Sim 은 초 단위라 6:00 = 360초. 포아송 도착이면 도착 간격은 지수분포(Negexp).', ok: m => objs(m, 'Source').some(([, o]) => isDist(o.interval, 'Negexp', 360)) },
@@ -116,24 +116,24 @@
         { t: 'Drain → Statistics 의 <b>Average lifespan</b> 은 몇 분? (소수 첫째 자리)', q: { ans: () => fin() && stat(one(S.model, 'Drain')).life / 60, tol: .15, unit: '분' }, after: '체류시간 W = 대기 Wq + 서비스 3분. M/M/1 이론 Wq = 3분 → W ≈ 6분.' },
         { t: 'Buffer → Statistics 의 <b>평균 내용물</b>(= 대기열 길이 Lq) 은? (소수 둘째 자리)', q: { ans: () => fin() && stat(one(S.model, 'Buffer')).avg, tol: .03, unit: '명' }, after: '이론 Lq = ρ²/(1−ρ) = 0.5. 1장의 "해석적 결과로 검증"을 Plant Sim 으로 직접 해 본 거예요.' },
       ] },
-    { id: 'recipes', ch: '2장 예제 1', title: '수정된 커피 부스 — 사용자 정의 MU · TableFile · Method', start: () => coffee().end(DAY).m,
+    { id: 'recipes', ch: '2장 예제 1', title: '수정된 커피 부스 — 사용자 정의 MU · DataTable · Method', start: () => coffee().end(DAY).m,
       intro: '손님마다 레시피 수가 1개(50%) · 2개(30%) · 3개(20%), 서비스 평균 3 · 4 · 5분. 1장 모델에서 시작해요. 강의 슬라이드 15~33쪽.',
       steps: [
-        { t: '왼쪽 Class Library → <b>MUs</b> 의 <b>Entity</b> 를 클릭해 선택 → 아래 <b>MU 복제</b> → 이름을 <code>myEntity</code> 로.', hint: '강의: "Duplicate Entity on MUs → MyObjects 로 옮기고 이름 바꾸기". 열린 창의 Name 칸에서 이름을 바꾸고 OK.', ok: m => !!m.mus.myEntity },
+        { t: '왼쪽 Class Library → <b>MUs</b> 의 <b>Part</b> 를 클릭해 선택 → 아래 <b>MU 복제</b> → 이름을 <code>myEntity</code> 로.', hint: '강의 슬라이드: "Duplicate Entity on MUs → MyObjects 로 옮기고 이름 바꾸기" — 2201 에서는 Entity 가 Part 예요. 열린 창의 Name 칸에서 이름을 바꾸고 OK.', ok: m => !!m.mus.myEntity },
         { t: 'myEntity 창 → <b>+ 속성 추가</b>: <code>aNoRecipes</code> (integer), <code>aArrTime</code> (real).', ok: m => m.mus.myEntity && ['aNoRecipes', 'aArrTime'].every(a => m.mus.myEntity.attrs.some(x => x.name === a)) },
         { t: 'myEntity 를 선택한 채 <b>MU 파생</b> 3번 → 각각 이름 <code>myEntity1</code>·<code>myEntity2</code>·<code>myEntity3</code>, aNoRecipes 값 <code>1</code>·<code>2</code>·<code>3</code>.', hint: '파생(Derive)한 MU 는 부모의 속성을 물려받아요. 값만 바꾸면 돼요.', ok: m => [1, 2, 3].every(k => { const u = m.mus['myEntity' + k]; return u && (u.attrs.find(a => a.name === 'aNoRecipes') || {}).value === k; }) },
-        { t: 'Information Flow 탭에서 <b>TableFile</b> 을 놓고 이름 <code>tbEntity</code>. 열 2개: <code>MU</code>(object), <code>Frequency</code>(real) / 행 3개: <code>.MUs.myEntity1</code> 0.5, <code>.MUs.myEntity2</code> 0.3, <code>.MUs.myEntity3</code> 0.2', ok: m => { const t = m.objects.tbEntity; if (!t || t.cls !== 'TableFile' || t.rows.length < 3) return false; const f = {}; t.rows.forEach(r => f[String(r[0]).split('.').pop()] = +r[1]); return near(f.myEntity1, .5, .001) && near(f.myEntity2, .3, .001) && near(f.myEntity3, .2, .001); } },
+        { t: 'Information Flow 탭에서 <b>DataTable</b> 을 놓고 이름 <code>tbEntity</code>. 열 2개: <code>MU</code>(object), <code>Frequency</code>(real) / 행 3개: <code>.MUs.myEntity1</code> 0.5, <code>.MUs.myEntity2</code> 0.3, <code>.MUs.myEntity3</code> 0.2', ok: m => { const t = m.objects.tbEntity; if (!t || t.cls !== 'DataTable' || t.rows.length < 3) return false; const f = {}; t.rows.forEach(r => f[String(r[0]).split('.').pop()] = +r[1]); return near(f.myEntity1, .5, .001) && near(f.myEntity2, .3, .001) && near(f.myEntity3, .2, .001); } },
         { t: 'Source → Attributes: <b>MU selection</b> = <code>Percentage</code>, <b>Table</b> = <code>tbEntity</code>.', ok: m => objs(m, 'Source').some(([, o]) => o.musel === 'Percentage' && o.table === 'tbEntity') },
         { t: 'TakeOrder → Times: Processing time 를 <code>List(Type)</code> 로 바꾸고 myEntity1 = Negexp <code>3:00</code>, myEntity2 = Negexp <code>4:00</code>, myEntity3 = Negexp <code>5:00</code>.', hint: '"How to express three cases of processing time?" — 타입별 처리시간. Entrance control 메서드에서 <code>?.ProcTime := …</code> 로 바꾸는 방법도 있어요 (5장).', ok: m => { const p = m.objects.TakeOrder && m.objects.TakeOrder.procTime; return p && p.t === 'ListType' && [3, 4, 5].every((v, i) => isDist(p.list['myEntity' + (i + 1)], 'Negexp', v * 60)); } },
         { t: '<b>Variable</b> 을 놓고 이름 <code>vWIP</code>, Data type integer, 값 0. (시스템 안 손님 수)', ok: m => m.objects.vWIP && m.objects.vWIP.cls === 'Variable' },
         { t: '<b>Method</b> 를 놓고 이름 <code>mCustArrival</code>. 내용:<pre>vWIP += 1\n@.aArrTime := EventController.SimTime</pre>그리고 Buffer → Controls → <b>Entrance</b> = mCustArrival.', hint: '@ = 메서드를 부른 MU (지금 버퍼에 들어온 손님). 시스템 진입 시각을 손님 속성에 기록해요.', ok: m => m.objects.mCustArrival && /vWIP\s*\+=\s*1|vWIP\s*:=\s*vWIP\s*\+\s*1/i.test(codeOf('mCustArrival')) && /aArrTime/i.test(codeOf('mCustArrival')) && objs(m, 'Buffer').some(([, o]) => o.entCtrl === 'mCustArrival') },
-        { t: 'TableFile <code>tbSystemLog</code> (열: Name string, Arrival real, Departure real, TimeInSystem real) 을 만들고, Method <code>mLeaveSys</code>:<pre>vWIP -= 1\ntbSystemLog.writeRow(1, tbSystemLog.yDim + 1,\n  @.Name, @.aArrTime, EventController.SimTime,\n  EventController.SimTime - @.aArrTime)</pre>Drain → Controls → <b>Entrance</b> = mLeaveSys.', ok: m => m.objects.tbSystemLog && m.objects.tbSystemLog.cls === 'TableFile' && /writeRow/i.test(codeOf('mLeaveSys')) && /vWIP/i.test(codeOf('mLeaveSys')) && objs(m, 'Drain').some(([, o]) => o.entCtrl === 'mLeaveSys') },
+        { t: 'DataTable <code>tbSystemLog</code> (열: Name string, Arrival real, Departure real, TimeInSystem real) 을 만들고, Method <code>mLeaveSys</code>:<pre>vWIP -= 1\ntbSystemLog.writeRow(1, tbSystemLog.yDim + 1,\n  @.Name, @.aArrTime, EventController.SimTime,\n  EventController.SimTime - @.aArrTime)</pre>Drain → Controls → <b>Entrance</b> = mLeaveSys.', ok: m => m.objects.tbSystemLog && m.objects.tbSystemLog.cls === 'DataTable' && /writeRow/i.test(codeOf('mLeaveSys')) && /vWIP/i.test(codeOf('mLeaveSys')) && objs(m, 'Drain').some(([, o]) => o.entCtrl === 'mLeaveSys') },
         { t: 'Method 하나를 더 놓고 이름을 <code>Init</code> 으로 — 내용 <code>tbSystemLog.delete</code>. (예약 이름: 시작할 때 자동 실행)', ok: m => Object.keys(m.objects).some(n => n.toLowerCase() === 'init' && m.objects[n].cls === 'Method' && /delete/i.test(m.objects[n].code)) },
         { t: 'EventController End = <code>1:00:00:00</code> (1일) 로 두고 <b>⏩ Fast</b> 실행. tbSystemLog 를 더블클릭해 기록이 쌓였는지 보세요.', ok: () => fin() && S.sim.tables.tbSystemLog && S.sim.tables.tbSystemLog.rows.length > 50 },
         { t: 'vWIP → Statistics 의 <b>시간가중 평균</b> 은? (소수 둘째 자리)', q: { ans: () => fin() && S.sim.varMean('vWIP'), tol: .03 }, after: '변수의 시간가중 평균 = 시스템 안 평균 손님 수 L (4장 time-based 통계).' },
         { t: 'Drain → Statistics → <b>Type statistics</b>: myEntity3 의 평균 체류시간은 몇 분? (소수 첫째 자리)', q: { ans: () => { if (!fin()) return null; const b = stat(one(S.model, 'Drain')).byType.myEntity3; return b ? b.life / b.n / 60 : null; }, tol: .15, unit: '분' } },
       ] },
-    { id: 'block', ch: '2장', title: '버퍼와 블로킹 — Blocked 상태 직접 보기', start: () => B().add('Source', 'Source', 100, 160, { interval: neg(75) }).add('S1', 'SingleProc', 240, 160, { procTime: neg(60) }).add('S2', 'SingleProc', 380, 160, { procTime: neg(60) }).add('Drain', 'Drain', 520, 160).con('Source', 'S1', 'S2', 'Drain').end(5 * DAY).m,
+    { id: 'block', ch: '2장', title: '버퍼와 블로킹 — Blocked 상태 직접 보기', start: () => B().add('Source', 'Source', 100, 160, { interval: neg(75) }).add('S1', 'Station', 240, 160, { procTime: neg(60) }).add('S2', 'Station', 380, 160, { procTime: neg(60) }).add('Drain', 'Drain', 520, 160).con('Source', 'S1', 'S2', 'Drain').end(5 * DAY).m,
       intro: 'S1 → S2 사이에 버퍼가 없어요. 둘 다 평균 1분(지수)인데 S2 가 바쁘면 S1 은 끝낸 부품을 못 넘기고 <b>Blocked</b>(노랑) 상태가 돼요.',
       steps: [
         { t: '<b>▶ Start</b> 로 S1 의 LED 가 노랗게 되는 순간을 찾아보고, <b>⏩ Fast</b> 로 End(5일)까지 실행.', ok: () => fin() && !has(S.model, 'Buffer') },
@@ -143,12 +143,12 @@
         { t: '⟲ Reset 후 ⏩ Fast. S1 의 Blocked 는 이제 몇 %?', q: { ans: () => fin() && has(S.model, 'Buffer') && stat('S1').blocked * 100, tol: 2, unit: '%' } },
         { t: '버퍼 2칸으로 처리량은?', q: { ans: () => fin() && has(S.model, 'Buffer') && stat('Drain').thru, tol: 1 }, after: '버퍼는 두 스테이션의 변동을 떼어 놓아요(decoupling). 팀 프로젝트의 "버퍼 0/2/5/10" 실험이 바로 이것 — Capacity 를 5, 10 으로도 바꿔 보세요.' },
       ] },
-    { id: 'mill', ch: '2장 예제 2', title: '밀링 병목 — 병렬 기계 추가와 Exit strategy', start: () => B().add('Source', 'Source', 100, 180, { interval: neg(5 * MIN) }).add('CutToSize', 'SingleProc', 230, 180, { procTime: uni(3 * MIN, 5 * MIN) }).add('Milling', 'SingleProc', 370, 120, { procTime: uni(5 * MIN, 7 * MIN) }).add('Drain', 'Drain', 510, 180).con('Source', 'CutToSize', 'Milling', 'Drain').end(2 * DAY).m,
+    { id: 'mill', ch: '2장 예제 2', title: '밀링 병목 — 병렬 기계 추가와 Exit strategy', start: () => B().add('Source', 'Source', 100, 180, { interval: neg(5 * MIN) }).add('CutToSize', 'Station', 230, 180, { procTime: uni(3 * MIN, 5 * MIN) }).add('Milling', 'Station', 370, 120, { procTime: uni(5 * MIN, 7 * MIN) }).add('Drain', 'Drain', 510, 180).con('Source', 'CutToSize', 'Milling', 'Drain').end(2 * DAY).m,
       intro: '도착 평균 5분, CutToSize 균등(3~5분), Milling 균등(5~7분). Milling 의 ρ = 6/5 = 1.2 — 병목이에요.',
       steps: [
         { t: '⏩ Fast 로 실행 → Milling → Statistics 의 <b>Working</b> %? (정수)', q: { ans: () => fin() && !S.model.objects.Milling2 && stat('Milling').work * 100, tol: 1.5, unit: '%' }, after: '거의 100% — 쉴 틈이 없는 병목. 그 앞 CutToSize 는 Blocked 가 많을 거예요.' },
         { t: 'Drain Throughput per hour? (소수 첫째 자리)', q: { ans: () => fin() && !S.model.objects.Milling2 && stat('Drain').thru, tol: .3 } },
-        { t: 'SingleProc 를 하나 더 놓고 이름 <code>Milling2</code>, Processing time = Const <code>3:00</code> (더 빠른 새 기계).', ok: m => m.objects.Milling2 && isDist(m.objects.Milling2.procTime, 'Const', 180, 5) },
+        { t: 'Station 을 하나 더 놓고 이름 <code>Milling2</code>, Processing time = Const <code>3:00</code> (더 빠른 새 기계).', ok: m => m.objects.Milling2 && isDist(m.objects.Milling2.procTime, 'Const', 180, 5) },
         { t: 'Connector: CutToSize → Milling2, Milling2 → Drain.', ok: m => path(m, ['CutToSize', 'Milling2']) && objs(m, 'Drain').some(([d]) => conn(m, 'Milling2', d)) },
         { t: 'Reset → ⏩ Fast. 처리량은? (소수 첫째 자리)', q: { ans: () => fin() && S.model.objects.Milling2 && stat('Drain').thru, tol: .3 }, after: '도착률 12개/시간을 거의 다 처리 — 병목 해소.' },
         { t: 'CutToSize → Exit Strategy 는 기본 <b>Cyclic</b>(차례로). <code>Start at successor 1</code> 로 바꾸고 다시 실행하면 Milling2 의 Working 은 Cyclic 때보다?', choices: ['늘어난다', '줄어든다', '같다'], a: 1, hint: 'Start at successor 1: 항상 1번 후속(먼저 연결한 Milling)부터 빈 곳을 찾아요. Show successors 순서를 확인!', after: '분기 규칙만 바꿔도 어느 기계가 일을 많이 하는지가 달라져요. 더 빠른 기계를 1번으로 두는 게 유리하죠.' },
@@ -162,11 +162,11 @@
         { t: 'Reset → ⏩ Fast. myEntity1 평균 체류(분)?', q: { ans: () => { if (!fin() || !has(S.model, 'Sorter')) return null; const b = stat('Drain').byType.myEntity1; return b && b.life / b.n / 60; }, tol: .3, unit: '분' } },
         { t: 'myEntity3 (3잔) 손님은 어떻게 됐을까?', choices: ['더 짧아졌다', '더 길어졌다', '변화 없다'], a: 1, after: '짧은 작업 먼저(SPT) → 평균은 줄지만 긴 작업은 더 기다려요. 처리량(Drain StatNumIn)은 거의 같아요.' },
       ] },
-    { id: 'drive', ch: '2장 예제 4', title: '드라이브스루 — ExperimentManager 로 점원 수 k 최적화', start: () => B().add('Source', 'Source', 100, 160, { interval: neg(6 * MIN) }).add('Buffer', 'Buffer', 220, 160, { cap: 5 }).add('Window', 'ParallelProc', 340, 160, { xdim: 1, procTime: neg(8 * MIN) }).add('Drain', 'Drain', 460, 160).con('Source', 'Buffer', 'Window', 'Drain').end(30 * DAY).m,
+    { id: 'drive', ch: '2장 예제 4', title: '드라이브스루 — ExperimentManager 로 점원 수 k 최적화', start: () => B().add('Source', 'Source', 100, 160, { interval: neg(6 * MIN) }).add('Buffer', 'Buffer', 220, 160, { cap: 5 }).add('Window', 'ParallelStation', 340, 160, { xdim: 1, procTime: neg(8 * MIN) }).add('Drain', 'Drain', 460, 160).con('Source', 'Buffer', 'Window', 'Drain').end(30 * DAY).m,
       intro: '시간당 10명 도착, 서비스 평균 8분, 창구 앞 공간 6칸(서비스 중 포함) — 꽉 차면 손님이 떠나요. 공간 1칸 월 $500, 손님당 이익 $3, 점원 월급 $4,000. (실행 1회 = 1개월 = 30일로 줄였어요)',
       steps: [
         { t: 'Source → <b>Operating mode</b> 의 Blocking 체크를 끄세요 (Non-blocking: 자리가 없으면 손님이 떠남).', ok: m => objs(m, 'Source').some(([, o]) => o.mode !== 'blocking') },
-        { t: 'Window(ParallelProc) 의 <b>X-dimension</b> = 점원 수 k. 지금 1, Buffer Capacity = 6 − k = 5 인지 확인.', ok: m => m.objects.Window && +m.objects.Window.xdim === 1 && +m.objects.Buffer.cap === 5 },
+        { t: 'Window(ParallelStation) 의 <b>X-dimension</b> = 점원 수 k. 지금 1, Buffer Capacity = 6 − k = 5 인지 확인.', ok: m => m.objects.Window && +m.objects.Window.xdim === 1 && +m.objects.Buffer.cap === 5 },
         { t: 'Variable 3개 (Data type real): <code>vProfitPerMonth</code>, <code>vCostForHiring</code>, <code>vTotalProfit</code>.', ok: m => ['vProfitPerMonth', 'vCostForHiring', 'vTotalProfit'].every(n => m.objects[n] && m.objects[n].cls === 'Variable') },
         { t: 'Method 이름 <code>EndSim</code> (종료 시 자동 실행):<pre>vProfitPerMonth := 3 * Drain.StatNumIn\nvCostForHiring := 4000 * Window.XDim + 500 * 6\nvTotalProfit := vProfitPerMonth - vCostForHiring</pre>', ok: m => { const k = Object.keys(m.objects).find(n => n.toLowerCase() === 'endsim'); return k && /vTotalProfit/i.test(m.objects[k].code) && /XDim/i.test(m.objects[k].code); } },
         { t: '⏩ Fast 실행 → Frame 의 vTotalProfit 값은? (k = 1, 정수)', q: { ans: () => fin() && S.sim.vars.vTotalProfit && S.sim.vars.vTotalProfit.v, tol: 300, unit: '$' } },
@@ -182,7 +182,7 @@
         { t: 'Bending 의 Working %? (정수)', q: { ans: () => fin() && stat('Bending').work * 100, tol: 1.5, unit: '%' }, after: '굽힘 ρ = (4/60)×20 = 1.33 — 강의 수치 그대로면 굽힘이 감당 못 해요. bfBend 의 최대 내용물을 보세요.' },
         { t: '예제 6 처럼 FC 비율을 60 / 40 으로 바꾸면 Cutting 의 Working 은? (이론 ρ = 0.6 × 4/60 × 10)', q: { ans: () => fin() && +S.model.objects.FC.exit.pct[0] === 60 && stat('Cutting').work * 100, tol: 2.5, unit: '%' } },
       ] },
-    { id: 'output', ch: '4장', title: '출력 분석 — 반복 실행과 워밍업', start: () => B().add('Source', 'Source', 100, 160, { interval: neg(60) }).add('Buffer', 'Buffer', 220, 160, { cap: -1 }).add('Server', 'SingleProc', 340, 160, { procTime: neg(54) }).add('Drain', 'Drain', 460, 160).con('Source', 'Buffer', 'Server', 'Drain').end(DAY).m,
+    { id: 'output', ch: '4장', title: '출력 분석 — 반복 실행과 워밍업', start: () => B().add('Source', 'Source', 100, 160, { interval: neg(60) }).add('Buffer', 'Buffer', 220, 160, { cap: -1 }).add('Server', 'Station', 340, 160, { procTime: neg(54) }).add('Drain', 'Drain', 460, 160).con('Source', 'Buffer', 'Server', 'Drain').end(DAY).m,
       intro: 'ρ = 0.9 인 M/M/1 (도착 평균 1:00, 서비스 0:54). 이론 체류시간 W = 1/(μ−λ) = 540초 = 9:00. 한 번 실행한 숫자를 믿어도 될까요?',
       steps: [
         { t: '⏩ Fast (End 1일). Drain Average lifespan (초)?', q: { ans: () => fin() && stat('Drain').life, tol: 8, unit: '초' } },

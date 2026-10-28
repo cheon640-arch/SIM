@@ -56,22 +56,22 @@ window.PS = (function () {
   /* ---------- 클래스 기본값 ---------- */
   const exitDef = () => ({ strategy: 'cyclic', blocking: false, pct: [], attr: '' });
   const DEFAULTS = {
-    Source: () => ({ interval: { t: 'Const', v: 60 }, start: 0, stop: '', amount: '', mode: 'blocking', musel: 'Constant', mu: 'Entity', table: '', exit: exitDef(), exitCtrl: '' }),
-    SingleProc: () => ({ procTime: { t: 'Const', v: 60 }, exit: exitDef(), entCtrl: '', exitCtrl: '' }),
-    ParallelProc: () => ({ xdim: 2, ydim: 1, procTime: { t: 'Const', v: 60 }, exit: exitDef(), entCtrl: '', exitCtrl: '' }),
+    Source: () => ({ interval: { t: 'Const', v: 60 }, start: 0, stop: '', amount: '', mode: 'blocking', musel: 'Constant', mu: 'Part', table: '', exit: exitDef(), exitCtrl: '' }),
+    Station: () => ({ procTime: { t: 'Const', v: 60 }, exit: exitDef(), entCtrl: '', exitCtrl: '' }),
+    ParallelStation: () => ({ xdim: 2, ydim: 1, procTime: { t: 'Const', v: 60 }, exit: exitDef(), entCtrl: '', exitCtrl: '' }),
     Buffer: () => ({ cap: 10, dwell: 0, btype: 'Queue', exit: exitDef(), entCtrl: '', exitCtrl: '' }),
     Sorter: () => ({ cap: 10, sortAttr: '', order: 'ascending', exit: exitDef(), entCtrl: '', exitCtrl: '' }),
-    Line: () => ({ length: 10, speed: 1, cap: 10, exit: exitDef(), entCtrl: '', exitCtrl: '' }),
+    Conveyor: () => ({ length: 10, speed: 1, cap: 10, exit: exitDef(), entCtrl: '', exitCtrl: '' }),
     FlowControl: () => ({ exit: { strategy: 'percentage', blocking: false, pct: [], attr: '' }, exitCtrl: '' }),
     Drain: () => ({ entCtrl: '' }),
     Method: () => ({ code: '' }),
     Variable: () => ({ dtype: 'integer', value: 0 }),
-    TableFile: () => ({ cols: [{ name: 'Col1', type: 'string' }], rows: [] }),
+    DataTable: () => ({ cols: [{ name: 'Col1', type: 'string' }], rows: [] }),
     ExperimentManager: () => ({ outputs: [], inputs: [], exps: [], obs: 5 }),
     Comment: () => ({ text: '메모' }),
   };
-  const MATERIAL = new Set(['Source', 'SingleProc', 'ParallelProc', 'Buffer', 'Sorter', 'Line', 'FlowControl', 'Drain']);
-  function newModel() { return { objects: {}, connectors: [], mus: { Entity: { attrs: [], color: '#0075de' }, Container: { attrs: [], color: '#b18164' } }, ec: { end: 86400, statStart: 0 } }; }
+  const MATERIAL = new Set(['Source', 'Station', 'ParallelStation', 'Buffer', 'Sorter', 'Conveyor', 'FlowControl', 'Drain']);
+  function newModel() { return { objects: {}, connectors: [], mus: { Part: { attrs: [], color: '#0075de' }, Container: { attrs: [], color: '#b18164' } }, ec: { end: 86400, statStart: 0 } }; }
 
   /* ---------- 이벤트 큐 ---------- */
   class Heap {
@@ -93,10 +93,10 @@ window.PS = (function () {
       for (const [name, d] of Object.entries(this.m.objects)) {
         const o = { name, cls: d.cls, d, succ: [], pred: [], items: [], waiters: [], ptr: 0 };
         if (d.cls === 'Variable') this.vars[name] = { v: castVar(d.value, d.dtype), dtype: d.dtype, area: 0, last: 0, min: castVar(d.value, d.dtype), max: castVar(d.value, d.dtype), t0: 0 };
-        if (d.cls === 'TableFile') this.tables[name] = d;
+        if (d.cls === 'DataTable') this.tables[name] = d;
         if (d.cls === 'Method') this.methods[name] = d;
-        if (d.cls === 'ParallelProc') o.n = Math.max(1, (+d.xdim || 1) * (+d.ydim || 1));
-        if (d.cls === 'SingleProc') o.n = 1;
+        if (d.cls === 'ParallelStation') o.n = Math.max(1, (+d.xdim || 1) * (+d.ydim || 1));
+        if (d.cls === 'Station') o.n = 1;
         if (d.procTime) o.procTime = d.procTime;
         this.O[name] = o;
       }
@@ -126,7 +126,7 @@ window.PS = (function () {
         for (const o of Object.values(this.O)) {
           const st = o.st;
           if (o.n) { let w = 0, b = 0; for (const it of o.items) { if (it.st === 'work') w++; else b++; } st.work += w * dt; st.blocked += b * dt; st.wait += (o.n - w - b) * dt; st.cap += o.n * dt; }
-          if (o.cls === 'Buffer' || o.cls === 'Sorter' || o.cls === 'Line') { st.occ += o.items.length * dt; st.cap += dt; if (o.items.length) st.work += dt; else st.wait += dt; }
+          if (o.cls === 'Buffer' || o.cls === 'Sorter' || o.cls === 'Conveyor') { st.occ += o.items.length * dt; st.cap += dt; if (o.items.length) st.work += dt; else st.wait += dt; }
         }
       }
       this.last = this.t;
@@ -157,7 +157,7 @@ window.PS = (function () {
         for (const r of tb.rows) { x -= (+r[1] || 0); if (x <= 0) return String(r[0]).split('.').pop(); }
         return String(tb.rows[tb.rows.length - 1][0]).split('.').pop();
       }
-      return String(d.mu || 'Entity').split('.').pop();
+      return String(d.mu || 'Part').split('.').pop();
     }
     /* ---- Source ---- */
     create(o) {
@@ -176,7 +176,7 @@ window.PS = (function () {
     kill(mu) { this.mus.delete(mu); mu.loc = null; mu.dead = true; }
 
     /* ---- 받기 ---- */
-    capOf(o) { switch (o.cls) { case 'SingleProc': case 'ParallelProc': return o.n; case 'Buffer': case 'Sorter': case 'Line': { const c = +o.d.cap; return c < 0 || o.d.cap === '' ? Infinity : c; } case 'Drain': return Infinity; } return 0; }
+    capOf(o) { switch (o.cls) { case 'Station': case 'ParallelStation': return o.n; case 'Buffer': case 'Sorter': case 'Conveyor': { const c = +o.d.cap; return c < 0 || o.d.cap === '' ? Infinity : c; } case 'Drain': return Infinity; } return 0; }
     canAccept(o, mu) {
       if (o.cls === 'FlowControl') return !!this.chooseTargets(o, mu, true).find(t => this.canAccept(this.O[t], mu));
       if (o.cls === 'Source') return false;
@@ -197,11 +197,11 @@ window.PS = (function () {
       o.items.push(it); if (o.items.length > o.st.occMax) o.st.occMax = o.items.length;
       if (o.d.entCtrl) this.callMethod(o.d.entCtrl, { mu, obj: o });
       if (mu.loc !== o.name) return; // 엔트런스 컨트롤에서 다른 곳으로 옮김
-      if (o.cls === 'SingleProc' || o.cls === 'ParallelProc') {
+      if (o.cls === 'Station' || o.cls === 'ParallelStation') {
         const pt = Math.max(0, this.procTimeFor(o, mu));
         this.note('start', `${o.name}: ${mu.name}#${mu.id} 작업 시작 (${fmtTime(pt)})`);
         this.at(this.t + pt, () => { if (it.mu.loc !== o.name || !o.items.includes(it)) return; it.st = 'ready'; it.rt = this.t; this.note('done', `${o.name}: ${mu.name}#${mu.id} 작업 끝`); this.tryExit(o); }, 'end', o.name);
-      } else if (o.cls === 'Line') {
+      } else if (o.cls === 'Conveyor') {
         const tt = (+o.d.length || 0) / Math.max(1e-9, +o.d.speed || 1); it.st = 'work';
         this.at(this.t + tt, () => { it.st = 'ready'; it.rt = this.t; this.tryExit(o); }, 'line', o.name);
       } else { // Buffer, Sorter
@@ -219,7 +219,7 @@ window.PS = (function () {
     exitOrder(o) {
       const ready = o.items.filter(i => i.st === 'ready');
       if (o.cls === 'Buffer') { if (!o.items.length) return []; const f = o.d.btype === 'Stack' ? o.items[o.items.length - 1] : o.items[0]; return f.st === 'ready' ? [f] : []; }
-      if (o.cls === 'Line') return o.items.length && o.items[0].st === 'ready' ? [o.items[0]] : [];
+      if (o.cls === 'Conveyor') return o.items.length && o.items[0].st === 'ready' ? [o.items[0]] : [];
       if (o.cls === 'Sorter') { const a = o.d.sortAttr, sgn = o.d.order === 'descending' ? -1 : 1; return ready.slice().sort((x, y) => { const vx = a ? (x.mu.attrs[a] ?? 0) : 0, vy = a ? (y.mu.attrs[a] ?? 0) : 0; return vx === vy ? x.rt - y.rt : (vx < vy ? -1 : 1) * sgn; }); }
       return ready.sort((x, y) => x.rt - y.rt);
     }
@@ -228,7 +228,7 @@ window.PS = (function () {
       for (;;) {
         const cand = this.exitOrder(o); if (!cand.length) return;
         let moved = false;
-        for (const it of cand) { if (this.moveOut(o, it)) { moved = true; break; } if (o.cls === 'Buffer' || o.cls === 'Line') break; }
+        for (const it of cand) { if (this.moveOut(o, it)) { moved = true; break; } if (o.cls === 'Buffer' || o.cls === 'Conveyor') break; }
         if (!moved || ++guard > 10000) return;
       }
     }
@@ -291,7 +291,7 @@ window.PS = (function () {
       for (const o of Object.values(this.O)) {
         if (o.cls === 'Method') continue;
         if (o.cls === 'Variable') { def(env, o.name, () => this.vars[o.name].v, v => this.setVar(o.name, v)); continue; }
-        if (o.cls === 'TableFile') { const tb = this.tableApi(o); env[o.name] = tb; continue; }
+        if (o.cls === 'DataTable') { const tb = this.tableApi(o); env[o.name] = tb; continue; }
         const p = {}; Object.defineProperty(p, '__o', { value: o });
         def(p, 'Name', () => o.name);
         def(p, 'NumMU', () => o.items.length);
@@ -357,7 +357,7 @@ window.PS = (function () {
       for (const o of Object.values(this.O)) {
         const s = o.st, r = { cls: o.cls, in: s.in, out: s.out };
         if (o.n) Object.assign(r, this.portions(o));
-        if (o.cls === 'Buffer' || o.cls === 'Sorter' || o.cls === 'Line') { r.avg = s.occ / T; r.max = s.occMax; r.cur = o.items.length; r.work = s.work / T; r.wait = s.wait / T; r.blocked = 0; }
+        if (o.cls === 'Buffer' || o.cls === 'Sorter' || o.cls === 'Conveyor') { r.avg = s.occ / T; r.max = s.occMax; r.cur = o.items.length; r.work = s.work / T; r.wait = s.wait / T; r.blocked = 0; }
         if (o.cls === 'Drain') { r.life = s.lifeN ? s.life / s.lifeN : 0; r.thru = s.in / T * 3600; r.byType = s.byType; }
         if (o.cls === 'Source') { r.created = s.created; r.lost = s.lost; }
         if (o.cls === 'Variable') { r.value = this.vars[o.name].v; r.mean = this.varMean(o.name); r.min = this.vars[o.name].min; r.max = this.vars[o.name].max; }

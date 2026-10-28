@@ -8,8 +8,8 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
-<link rel="stylesheet" href="assets/style.css?v=2"><link rel="stylesheet" href="assets/notes-tools.css?v=1">
-<script src="assets/simtalk.js?v=2"></script><script src="assets/app.js?v=2"></script>
+<link rel="stylesheet" href="assets/style.css?v=3"><link rel="stylesheet" href="assets/notes-tools.css?v=1">
+<script src="assets/simtalk.js?v=2"></script><script src="assets/app.js?v=5"></script>
 </head>
 <body data-ch="05">
 <div class="wrap">
@@ -196,7 +196,7 @@ print s</textarea>
     <tr><th>방법</th><th>언제 실행</th><th>예</th></tr>
     <tr><td><b>Entrance control</b></td><td>MU 가 객체에 들어올 때</td><td>도착 시각 기록, <code>?.ProcTime</code> 설정</td></tr>
     <tr><td><b>Exit control</b></td><td>MU 가 나갈 준비가 될 때 — 메서드가 <code>@.move(목적지)</code> 로 직접 보냄</td><td>타입별 라우팅</td></tr>
-    <tr><td><b>Sensor</b></td><td>Line·Track 위 특정 위치를 MU 가 지날 때</td><td>컨베이어 출구에서 확률 0.7 로 bf21 (2장 예제 5)</td></tr>
+    <tr><td><b>Sensor</b></td><td>Conveyor·Track 위 특정 위치를 MU 가 지날 때</td><td>컨베이어 출구에서 확률 0.7 로 bf21 (2장 예제 5)</td></tr>
     <tr><td>Init / Reset / EndSim</td><td>EventController 사건</td><td>초기화, 결과 계산</td></tr>
     <tr><td><code>&amp;ref.MethCall(시간, 인자)</code></td><td>지정한 시간 뒤에</td><td>10분 뒤 고장 복구. 경로·이름으로 직접 쓰면 즉시 호출되므로 <code>&amp;</code> 로 참조를 넘김</td></tr>
   </table></div>
@@ -247,7 +247,7 @@ vAvgWIP := vArea / EventController.SimTime</pre>
       <div class="choices" data-a="2"><button>then 을 쓰면 안 된다</button><button>@ 대신 ? 를 써야 한다</button><button><code>?.ProcTime = 180</code> 은 비교라서 값이 안 바뀐다 — 대입은 <code>:=</code></button></div>
     </div>
     <div class="q" data-id="c5-q3" data-title="익명 식별자 ?">
-      <p>같은 메서드 mProc 를 SingleProc 3대의 Entrance control 에 모두 연결했다. 메서드 안에서 "지금 어느 스테이션인지" 알려면?</p>
+      <p>같은 메서드 mProc 를 Station 3대의 Entrance control 에 모두 연결했다. 메서드 안에서 "지금 어느 스테이션인지" 알려면?</p>
       <div class="choices" data-a="0"><button><code>?.Name</code></button><button><code>@.Name</code></button><button><code>root.Name</code></button></div>
     </div>
   </div>

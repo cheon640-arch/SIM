@@ -8,8 +8,8 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
-<link rel="stylesheet" href="assets/style.css?v=2"><link rel="stylesheet" href="assets/notes-tools.css?v=1">
-<script src="assets/des.js?v=1"></script><script src="assets/app.js?v=2"></script>
+<link rel="stylesheet" href="assets/style.css?v=3"><link rel="stylesheet" href="assets/notes-tools.css?v=1">
+<script src="assets/des.js?v=1"></script><script src="assets/app.js?v=5"></script>
 </head>
 <body data-ch="02">
 <div class="wrap">
@@ -25,6 +25,9 @@
 
 <div class="part"><small>PART 1</small><h2>모델의 기본 단어</h2></div>
 
+<div class="note" style="margin-bottom:16px"><b class="t">Plant Simulation 2201 이름으로 정리했어요</b>강의 슬라이드는 예전 버전 화면이라 옛 이름이 나와요. 14.1·14.2 부터 아래처럼 바뀌었고, 2201 도 새 이름을 써요.
+<div class="tbl" style="margin:6px 0 0"><table class="t small"><tr><th>슬라이드 (옛 이름)</th><td>SingleProc</td><td>ParallelProc</td><td>Line</td><td>Assembly</td><td>Entity (MU)</td><td>TableFile</td><td>CardFile / StackFile / QueueFile</td></tr><tr><th>2201</th><td><b>Station</b></td><td><b>ParallelStation</b></td><td><b>Conveyor</b></td><td><b>AssemblyStation</b></td><td><b>Part</b></td><td><b>DataTable</b></td><td><b>DataList / DataStack / DataQueue</b></td></tr></table></div></div>
+
 <section class="card" id="terms" data-toc="시스템·파라미터·상태">
   <h2>시스템 · 파라미터 · 상태 · 개체 · 속성 · 변수</h2>
   <div class="tbl"><table class="t">
@@ -36,7 +39,7 @@
     <tr><td><b>Attribute</b></td><td><b>개체에 붙은</b> 성질 (개체마다 값이 다름)</td><td>aNoRecipes (레시피 수), aArrTime (도착 시각)</td></tr>
     <tr><td><b>Variable</b></td><td><b>시스템 전체</b>의 성질, 시간이 지나며 변함</td><td>vWIP (시스템 안 손님 수), vTotal (누적 손님 수)</td></tr>
   </table></div>
-  <div class="ps"><b>외우는 법</b> — 변수:시스템 = 속성:개체. "A variable is to the system as an attribute is to an entity." Plant Sim 에서 Variable 은 스칼라, TableFile 은 1·2차원 표(배열)로 둬요.</div>
+  <div class="ps"><b>외우는 법</b> — 변수:시스템 = 속성:개체. "A variable is to the system as an attribute is to an entity." Plant Sim 에서 Variable 은 스칼라, DataTable 은 1·2차원 표(배열)로 둬요.</div>
   <div class="lab-box">
     <div class="lh"><span class="pill">연습 1</span><b>무엇일까?</b></div>
     <div class="q" data-id="c2-term" data-title="Entity/Attribute/Variable/Parameter 구분">
@@ -73,15 +76,15 @@
 <div class="part"><small>PART 2</small><h2>기본 모델 예제</h2></div>
 
 <section class="card" id="ex1" data-toc="예제 1: 수정된 커피 부스">
-  <h2>예제 1 — 수정된 커피 부스 (속성 · TableFile · Method)</h2>
+  <h2>예제 1 — 수정된 커피 부스 (속성 · DataTable · Method)</h2>
   <p>손님마다 레시피 수가 달라요: 1개 50%, 2개 30%, 3개 20%. 서비스 시간은 지수분포지만 <b>평균이 레시피 수에 따라</b> 3 · 4 · 5분.</p>
   <div class="ps-lab" data-guide="recipes" data-note="아래 순서를 연습장에서 그대로 해요. 1장 커피 부스 모델에서 시작합니다."></div>
   <h3>Plant Sim 에서 만드는 순서</h3>
   <ol>
-    <li><b>사용자 정의 개체</b>: MUs 의 Entity 를 복제 → MyObjects 폴더로 → 이름 바꾸기(myEntity) → 속성 <code>aNoRecipes</code> 추가</li>
+    <li><b>사용자 정의 개체</b>: MUs 의 Part 를 복제 → MyObjects 폴더로 → 이름 바꾸기(myEntity) → 속성 <code>aNoRecipes</code> 추가</li>
     <li>myEntity 에서 <b>파생(Derive)</b> myEntity1·2·3 만들고 aNoRecipes = 1, 2, 3</li>
-    <li><b>TableFile</b> tbEntity 에 MU 이름과 비율(0.5/0.3/0.2) → Source 의 MU selection 을 <b>Percentage</b> 로, 표 지정</li>
-    <li>처리시간을 타입별로: Processing time 을 TableFile/Formula 로 (aNoRecipes 에 따라 3·4·5분)</li>
+    <li><b>DataTable</b> tbEntity 에 MU 이름과 비율(0.5/0.3/0.2) → Source 의 MU selection 을 <b>Percentage</b> 로, 표 지정</li>
+    <li>처리시간을 타입별로: Processing time 을 DataTable/Formula 로 (aNoRecipes 에 따라 3·4·5분)</li>
     <li><b>Variable</b>: vTotal(누적 손님), vWIP(시스템 안 손님)</li>
     <li><b>Method</b>: <code>mCustArrival</code>(Source exit → 도착 시각 기록, vWIP+1), <code>mLeaveSys</code>(Drain entrance → 퇴장 시각, tbSystemLog 에 한 줄, vWIP−1)</li>
     <li>Display/Chart 로 버퍼 대기 인원 모니터링, 평균 체류시간 보고</li>
@@ -113,7 +116,7 @@ tbSystemLog.writeRow(1, tbSystemLog.yDim + 1, @.name, @.aNoRecipes,
 <section class="card" id="branch" data-toc="분기·합류·블로킹">
   <h2>분기(Diverging) · 합류(Converging) · 블로킹</h2>
   <div class="cols">
-    <div class="box"><h4>분기 — 기본 Exit strategy</h4>후속 객체가 여럿이면 <b>차례로(Cyclic)</b> 보냄. Exit strategy 를 바꾸거나 FlowControl 객체로 변경. MU 속성(예: aNoRecipes)으로 갈 곳을 정할 수도 있음. Source·Buffer·SingleProc·FlowControl 등이 분기점이 될 수 있어요.</div>
+    <div class="box"><h4>분기 — 기본 Exit strategy</h4>후속 객체가 여럿이면 <b>차례로(Cyclic)</b> 보냄. Exit strategy 를 바꾸거나 FlowControl 객체로 변경. MU 속성(예: aNoRecipes)으로 갈 곳을 정할 수도 있음. Source·Buffer·Station·FlowControl 등이 분기점이 될 수 있어요.</div>
     <div class="box"><h4>합류</h4>여러 곳에서 들어오면 <b>도착 순서(FIFO)</b>대로. 후속 객체가 차 있으면 MU 는 그 객체의 <b>Forward Blocking List</b> 에 이름을 올리고 기다림.</div>
   </div>
   <div class="tbl"><table class="t">
@@ -179,9 +182,9 @@ tbSystemLog.writeRow(1, tbSystemLog.yDim + 1, @.name, @.aNoRecipes,
   <h2>예제 4 — Experiment Manager 로 점원 수 최적화</h2>
   <p>창구 1개 드라이브스루. 도착 포아송 시간당 10명, 서비스 지수 평균 8분. 창구 앞 공간 6칸(서비스 중인 차 포함) — 다 차면 도착한 차는 <b>떠남</b>. 공간 1칸 월 $500, 손님 1명당 이익 $3, 점원 1명 월급 $4,000. 1달 = 30일, 실험 1회 = 12개월, k = 1~4.</p>
   <ol>
-    <li>점원 k명 → <b>ParallelProc</b> 의 X-dimension = k</li>
+    <li>점원 k명 → <b>ParallelStation</b> 의 X-dimension = k</li>
     <li>출력 변수 <code>vProfitPerMonth</code>, <code>vCostForHiring</code>, <code>vTotalProfit</code> 정의 (EndSim 메서드에서 계산)</li>
-    <li><b>ExperimentManager</b>: Output values(vTotalProfit), Input values(ParallelProc.XDim — 속성 창에서 이름 찾기), Experiment design(1,2,3,4)</li>
+    <li><b>ExperimentManager</b>: Output values(vTotalProfit), Input values(ParallelStation.XDim — 속성 창에서 이름 찾기), Experiment design(1,2,3,4)</li>
     <li>실행 → 리포트에서 평균·신뢰구간 비교</li>
   </ol>
   <div class="lab-box">
@@ -208,7 +211,7 @@ tbSystemLog.writeRow(1, tbSystemLog.yDim + 1, @.name, @.aNoRecipes,
   <p>이동을 <b>단순 시간 지연</b>으로 둬도 되는 경우가 많아요(어떻게 움직였는지 관심 없으면). 하지만 <b>운반 수단이 부족해 기다리는 일</b>이 중요하면 자세히 모델링해야 해요 — 자원(resource)이 필요한 이동, 거리와 연결된 운반차(transporter).</p>
   <div class="tbl"><table class="t">
     <tr><th>방식</th><th>Plant Sim 객체</th><th>핵심</th></tr>
-    <tr><td>컨베이어</td><td>Line (Conveyor), TransferStation, 센서</td><td>TransferStation 이 버퍼 → 컨베이어로 옮김. 출구 지점 도달 시 <code>mFC1</code> 이 확률 0.7로 bf21, <code>mFC2</code> 는 아직 시험 안 한 것 bf22. 사용자 센서로 하역 가능</td></tr>
+    <tr><td>컨베이어</td><td>Conveyor, TransferStation, 센서</td><td>TransferStation 이 버퍼 → 컨베이어로 옮김. 출구 지점 도달 시 <code>mFC1</code> 이 확률 0.7로 bf21, <code>mFC2</code> 는 아직 시험 안 한 것 bf22. 사용자 센서로 하역 가능</td></tr>
     <tr><td>운반차 + 트랙</td><td>Transporter, Track</td><td>Source 가 Transporter 생성, Track 위를 이동. Track 의 센서 4개로 버퍼 상·하역</td></tr>
     <tr><td>작업자</td><td>Worker, WorkerPool, Workplace, Broker</td><td>WorkerPool 이 작업자를 보관, Broker 가 요청에 따라 작업자를 Workplace 사이로 보냄. 스테이션·버퍼마다 Broker 와 Service 지정. 개체에 목적지 정보 설정</td></tr>
     <tr><td>AGV</td><td>Transporter, AGVpool, Marker</td><td>AGVpool 의 <code>tfWorkList</code>: 이동 요청이 생기면 행 추가(도착 시, 가공 후) → AGV 가 출발 마커로 가서 집고 → 목적 마커에 내려놓고 → 행 삭제</td></tr>
@@ -262,16 +265,16 @@ tbSystemLog.writeRow(1, tbSystemLog.yDim + 1, @.name, @.aNoRecipes,
   <div class="lab-box">
     <div class="lh"><span class="pill">확인</span><b>상황 문제</b></div>
     <div class="q" data-id="c2-q1" data-title="Non-blocking 분기">
-      <p>Buffer 뒤에 SingleProc 두 대(M1, M2)가 연결돼 있고 Exit strategy 가 기본값(Non-blocking)이다. M1 이 바쁘고 M2 가 비었다면?</p>
+      <p>Buffer 뒤에 Station 두 대(M1, M2)가 연결돼 있고 Exit strategy 가 기본값(Non-blocking)이다. M1 이 바쁘고 M2 가 비었다면?</p>
       <div class="choices" data-a="0"><button>MU 는 M2 로 간다</button><button>MU 는 M1 이 빌 때까지 Buffer 에서 기다린다</button><button>MU 가 사라진다</button></div>
     </div>
     <div class="q" data-id="c2-q2" data-title="속성으로 경로 결정">
       <p>도어 라인 TO-BE 에서 A 모델만 D 스테이션에 가야 한다. Plant Sim 에서 가장 자연스러운 구현은?</p>
       <div class="choices" data-a="2"><button>D 스테이션의 처리시간을 0으로 둔다</button><button>A 모델 전용 Source 를 따로 만든다</button><button>MU 의 타입(속성)을 Exit control 메서드에서 보고 <code>@.move(D)</code> 또는 다음 스테이션으로 보낸다</button></div>
     </div>
-    <div class="q" data-id="c2-q3" data-title="ParallelProc">
+    <div class="q" data-id="c2-q3" data-title="ParallelStation">
       <p>예제 4 에서 점원 수 k 를 실험 관리자의 입력 변수로 쓰려면 어떤 속성을 바꾸나?</p>
-      <div class="choices" data-a="1"><button>Buffer.Capacity</button><button>ParallelProc 의 X-dimension</button><button>Source.Interval</button></div>
+      <div class="choices" data-a="1"><button>Buffer.Capacity</button><button>ParallelStation 의 X-dimension</button><button>Source.Interval</button></div>
     </div>
   </div>
 </section>
