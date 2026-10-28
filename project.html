@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>팀 프로젝트 · sim notebook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css?v=2">
+<script src="assets/app.js?v=2"></script>
+</head>
+<body data-page="proj">
+<div class="wrap">
+  <div class="hero">
+    <div class="kicker">Team homework / Term project · 50점</div>
+    <h1 class="display">팀 프로젝트</h1>
+    <p class="lede">자동차 혼류 도어 의장 라인: <b>컨베이어(AS-IS)</b> vs <b>AMR 모듈형(TO-BE)</b> — 변동성이 어느 수준을 넘으면 어느 쪽이 유리해지는지(전환점)를 Plant Simulation 으로 분석해요.</p>
+  </div>
+  <main class="lesson" style="padding-bottom:80px">
+
+<section class="card"><h2>진행 일정과 배점 (총 50점)</h2>
+  <div class="tbl"><table class="t">
+    <tr><th>Stage</th><th>내용</th><th>형식</th><th class="num">배점</th></tr>
+    <tr><td>1</td><td>대상 선정·조사: 시스템 소개·개발 방향, 산업 사례·정량 분석 방향, 일정·할당</td><td>조별 미팅 20분 이내</td><td class="num">5</td></tr>
+    <tr><td>2</td><td>제안 발표: 시스템 분석·모델링 (기능, 산업 적용·사례, 일정, 발표 구성)</td><td>제안 발표 10분 이내</td><td class="num">5</td></tr>
+    <tr><td>3</td><td>AS-IS 시뮬레이션 모델링·분석: 문제 정의·시스템 설정, 정량 분석 수준, 발표 완성도</td><td>중간 발표 15분 이내</td><td class="num">20</td></tr>
+    <tr><td>4</td><td>TO-BE 개선 모델 제안·적용 전/후 비교: 개선 시스템 정의, 적용 논리·타당성, Before/After</td><td>최종 발표 15분 이내</td><td class="num">20</td></tr>
+  </table></div>
+  <p class="hint">강의 공지 기준 (가안). 공통 Track A 는 건설기계 조립라인(컨베이어 → 셀 생산), Track B 는 Goods-to-picker(셔틀+공유리프트 → ACR). 우리 조는 Track A 성격의 자동차 혼류 조립으로 확정.</p>
+</section>
+
+<section class="card"><h2>공정 흐름과 작업시간 (확정안, 초)</h2>
+  <pre class="code">도어 탈거 → 도어 모듈 → 손잡이 → 창문·잠금
+ → A W/Strip → B 1차 → C 스위치베젤 → (D/E/F 모델 전용) → H 3차
+ → [조명 옵션] → I 4차 → (J/K/L 모델 전용) → N 완성검사 → 차체 재장착</pre>
+  <div class="tbl"><table class="t small">
+    <tr><th>공정</th><th class="num">A</th><th class="num">B</th><th class="num">C</th><th>근거</th></tr>
+    <tr><td>도어 모듈 · 손잡이 · 창문·잠금</td><td class="num">65</td><td class="num">65</td><td class="num">65</td><td>Erni(2017) 공정 / 시간 가정</td></tr>
+    <tr><td>A W/Strip</td><td class="num">65</td><td class="num">56</td><td class="num">69</td><td rowspan="3">이현승(2019) 표5-3</td></tr>
+    <tr><td>B 1차 조립</td><td class="num">78</td><td class="num">61</td><td class="num">53</td></tr>
+    <tr><td>C 스위치 베젤</td><td class="num">60</td><td class="num">75</td><td class="num">65</td></tr>
+    <tr><td>전용 융착+2차 (D/E/F)</td><td class="num">71</td><td class="num">53</td><td class="num">75</td><td>〃</td></tr>
+    <tr><td>H 3차 조립</td><td class="num">75</td><td class="num">62</td><td class="num">60</td><td>〃</td></tr>
+    <tr><td>조명 옵션 (선택 시만)</td><td class="num">≈17</td><td class="num">≈17</td><td class="num">≈17</td><td>박홍석(2009) / 선택률 0·30·60% 가정</td></tr>
+    <tr><td>I 4차 조립</td><td class="num">63</td><td class="num">56</td><td class="num">69</td><td>이현승(2019)</td></tr>
+    <tr><td>전용 신슐 융착 (J/K/L)</td><td class="num">78</td><td class="num">75</td><td class="num">65</td><td>〃</td></tr>
+    <tr><td>N 완성검사</td><td class="num">75</td><td class="num">56</td><td class="num">75</td><td>〃</td></tr>
+  </table></div>
+  <p>모델 비율 <b>A 56 : B 22 : C 22</b> (이현승 50:20:20 비례 조정, 팀 결정 필요).</p>
+  <div class="cols">
+    <div class="box"><h4>AS-IS (컨베이어)</h4>모든 도어가 모든 스테이션을 일렬로 통과 (다른 모델 전용 공정·미선택 옵션은 작업 없이 통과). 추월 불가.</div>
+    <div class="box accent-b"><h4>TO-BE (AGV/AMR)</h4>공통 공정 + 자기 모델 전용 공정 + (선택 시) 조명만 방문. 추월 가능 (차체 순서 변경 시 재조정).</div>
+  </div>
+</section>
+
+<section class="card"><h2>Plant Simulation 으로 옮기기</h2>
+  <div class="tbl"><table class="t">
+    <tr><th>요소</th><th>Plant Sim 객체 / 방법</th><th>강의</th></tr>
+    <tr><td>모델 A/B/C 혼류 투입</td><td>MU 3종 (Entity 파생) + TableFile 비율 → Source <b>MU selection: Percentage</b></td><td>2장 예제 1</td></tr>
+    <tr><td>모델별 작업시간</td><td>SingleProc Processing time <b>List(Type)</b> 또는 Entrance control 에서 <code>?.ProcTime :=</code></td><td>2장 예제 1, 5장</td></tr>
+    <tr><td>작업시간 편차</td><td>Normal(μ, σ) / Triangle / Lognorm — σ 또는 CV 를 실험변수로</td><td>3장</td></tr>
+    <tr><td>AS-IS 컨베이어</td><td>스테이션 직렬 + 버퍼 0 (Blocking) 또는 <b>Line</b>(길이·속도) + 정렬 버퍼</td><td>2장 예제 5 (Conveyor)</td></tr>
+    <tr><td>TO-BE 경로</td><td>모델별 경로표(TableFile) + 공통 <b>Exit control</b> 메서드 <code>@.move(…)</code> — 필요한 스테이션만</td><td>2장 예제 6 (aRoute, aCur), 5장</td></tr>
+    <tr><td>AMR 대수·이동</td><td>Transporter + Track 또는 AGVpool + Marker + <code>tfWorkList</code></td><td>2장 예제 5 (AGV)</td></tr>
+    <tr><td>옵션 선택률</td><td>MU 속성 aOption (Source Exit control 에서 <code>z_uniform</code> 으로 지정) → FlowControl/Exit control 분기</td><td>2·3·5장</td></tr>
+    <tr><td>실험 (버퍼 0/2/5/10, AMR 3/5/7 …)</td><td><b>ExperimentManager</b> Input/Output values, Observations 로 반복 · 신뢰구간 비교</td><td>2장 예제 4, 4장</td></tr>
+    <tr><td>워밍업</td><td>EventController Statistics start (컨베이어는 처음에 비어 있음)</td><td>4장</td></tr>
+  </table></div>
+  <div class="ps-lab"><div class="pl-h"><span class="pl-tag">Plant Sim 연습장</span><b>도어 라인 간이 모델 열어 보기</b></div>
+    <ol><li><b>AS-IS</b>: 12개 스테이션 직렬, 버퍼 없음, List(Type) 시간(Normal, σ = 10%), Source 60초 간격</li><li><b>TO-BE</b>: 스테이션마다 앞 버퍼 2, tbRoute + Exit control <code>mNext</code> 로 필요한 스테이션만 방문</li><li>Drain 의 Throughput · Average lifespan, 스테이션 Working/Blocked 비교</li></ol>
+    <p class="pl-note">간이 모델: 탈거·재장착·도어 모듈 등 ① 공정, 조명 옵션, AMR 대수 제약·이동시간은 빠져 있어요. 구조를 익히는 출발점으로만 쓰고 실제 분석은 Plant Simulation 에서!</p>
+    <a class="btn primary" href="simulator.html?example=door-asis">AS-IS 열기 →</a> <a class="btn ghost" href="simulator.html?example=door-tobe" style="background:#1d2a6b;color:#fff">TO-BE 열기 →</a></div>
+</section>
+
+<section class="card"><h2>실험 설계와 KPI</h2>
+  <div class="cols">
+    <div><h4>시나리오</h4><ul><li>안정적 생산: 작업시간 편차 작음, 순서 변경 없음, 고장 적음</li><li>변동이 큰 생산: 편차 큼, 순서 변경 잦음, 고장 잦음</li></ul>
+      <h4>실험변수 (예시 수준)</h4><div class="tbl"><table class="t small"><tr><td>작업시간 편차</td><td>낮음 / 중간 / 높음</td></tr><tr><td>차체 순서 변경률</td><td>0 / 5 / 10%</td></tr><tr><td>차체 도착 지연(고장)</td><td>없음 / 낮음 / 높음</td></tr><tr><td>옵션 선택 비율</td><td>20 / 40 / 60%</td></tr><tr><td>AS-IS 정렬 버퍼</td><td>0 / 2 / 5 / 10</td></tr><tr><td>TO-BE AMR 대수</td><td>3 / 5 / 7대</td></tr></table></div></div>
+    <div><h4>KPI</h4><div class="tbl"><table class="t small"><tr><th>분류</th><th>후보</th></tr><tr><td>생산성</td><td>시간당 생산량, 평균 리드타임, 목표 달성률</td></tr><tr><td>동기화</td><td>도어 미도착 차체 대기, 재결합 시 미도착률, 정상화 시간</td></tr><tr><td>자원</td><td>평균·최대 WIP, 스테이션 가동률, AMR 가동률·운반 대기</td></tr><tr><td>공간·비용</td><td>버퍼 점유 면적, 대당 생산비용</td></tr></table></div>
+      <p class="hint">시간당 생산량·리드타임 = Drain 통계(관측 기반), WIP·가동률 = 시간 기반 (4장).</p></div>
+  </div>
+  <div class="note"><b class="t">공정한 비교 체크리스트</b>같은 도착 패턴·모델 비율·투입 순서, 같은 작업자 수(실험 A 조건), 같은 재결합 기준, 같은 워밍업·실행 길이·반복 수(공통 난수 시드). 결론은 "평균 차이의 신뢰구간"으로.</div>
+</section>
+
+<section class="card"><h2>제출 파일 이름</h2>
+  <p>과제는 <code>HS1_</code>…, 프로젝트는 <code>PS1_</code>… 처럼 접두어 규칙을 지켜요 (강의 공지 Chap 0 기준 — 정확한 형식은 공지 원문 확인).</p>
+</section>
+  </main>
+</div>
+</body>
+</html>

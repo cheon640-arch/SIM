@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>05 SimTalk · sim notebook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=Gaegu:wght@400;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="assets/style.css?v=2"><link rel="stylesheet" href="assets/notes-tools.css?v=1">
+<script src="assets/simtalk.js?v=2"></script><script src="assets/app.js?v=2"></script>
+</head>
+<body data-ch="05">
+<div class="wrap">
+  <div class="hero">
+    <div class="kicker">Chapter 05 · SimTalk Programming and Sensor</div>
+    <h1 class="display">SimTalk</h1>
+    <p class="lede">Plant Simulation 의 기본 동작(들어오고, 처리하고, 나가고)을 내 마음대로 바꾸는 언어. Method 객체에 코드를 쓰고, 객체의 Entrance/Exit control 이나 센서에 연결하면 그 순간 실행돼요.</p>
+    <div class="meta">강의자료 Chap 5 · SimTalk 2.0 기준 · Plant Sim 실습 1개 · 코드 읽기 연습</div>
+  </div>
+  <div class="page-grid">
+    <aside class="toc"></aside>
+    <main class="lesson">
+
+<div class="part"><small>PART 1</small><h2>Method 와 편집기</h2></div>
+
+<section class="card" id="method" data-toc="Method 객체 · 편집기">
+  <h2>Method 객체 · 편집기</h2>
+  <p>Method(함수)는 항상 <b>본문(body)</b>이 있어요. Information Flow 에서 Method 를 Frame 에 놓고 더블클릭하면 편집기가 열려요.</p>
+  <div class="tbl"><table class="t">
+    <tr><th>기능</th><th>방법</th></tr>
+    <tr><td>줄 번호</td><td>VIEW – DISPLAY LINE NUMBERS</td></tr>
+    <tr><td>선택</td><td>더블클릭 = 단어, 세 번 클릭 = 한 줄, Ctrl + A = 전체</td></tr>
+    <tr><td>복사·붙여넣기·취소</td><td>Ctrl + C / Ctrl + V / Ctrl + Z (버전 9 까지는 오른쪽 클릭 복사 안 됨). 끌어서 옮기기도 가능</td></tr>
+    <tr><td>책갈피</td><td>텍스트 선택 후 책갈피 버튼 → 빨간색 표시, 빠른 이동</td></tr>
+    <tr><td>코드 자동완성</td><td>후보가 하나면 하늘색으로 제안 → <b>Ctrl + Space</b> 로 수락. 객체 뒤에서 Ctrl + Space = 가능한 속성·메서드 목록</td></tr>
+    <tr><td>속성·메서드 정보</td><td>객체 오른쪽 클릭 → <b>Show Attributes and Methods</b></td></tr>
+  </table></div>
+</section>
+
+<section class="card" id="names" data-toc="예약 이름 · 익명 식별자">
+  <h2>예약 이름 · 익명 식별자 · 경로</h2>
+  <div class="cols">
+    <div class="box"><h4>예약된 메서드 이름</h4><ul><li><code>Reset</code> — EventController 에서 Reset 누를 때</li><li><code>Init</code> — Init 누를 때 (시작 전 초기화)</li><li><code>EndSim</code> — 종료 시각에 도달했을 때</li></ul></div>
+    <div class="box"><h4>익명 식별자</h4><ul><li><code>root</code> — Frame 계층의 맨 위</li><li><code>self</code> — 지금 객체(메서드 자신)</li><li><code>current</code> — 지금 Frame</li><li><code>?</code> — 메서드를 <b>부른 객체</b></li><li><code>@</code> — 메서드를 <b>일으킨 MU</b></li><li><code>basis</code> — 클래스 라이브러리</li></ul></div>
+  </div>
+  <p><b>경로</b>: 절대 경로는 클래스 라이브러리 루트부터 — <code>.Models.Frame.workplace_1</code>. 상대 경로는 메서드가 있는 Frame 안에서 — <code>workplace_1</code>.</p>
+  <div class="lab-box">
+    <div class="lh"><span class="pill">연습 1</span><b>상황에 맞는 식별자</b></div>
+    <div class="q" data-id="c5-anon" data-title="익명 식별자">
+      <div class="ans-row" style="display:grid;gap:8px">
+        <label>Drain 의 Entrance control 에서 "방금 들어온 손님의 레시피 수" → <select class="ans" data-a="@"><option></option><option>@</option><option>?</option><option>self</option><option>root</option><option>current</option></select><code>.aNoRecipes</code></label>
+        <label>TakeOrder 의 Entrance control 에서 "이 스테이션의 처리시간을 바꾸기" → <select class="ans" data-a="?"><option></option><option>@</option><option>?</option><option>self</option><option>root</option><option>current</option></select><code>.ProcTime := 180</code></label>
+        <label>시뮬레이션 종료 시 이익을 계산하는 메서드 이름 → <select class="ans" data-a="EndSim"><option></option><option>Init</option><option>Reset</option><option>EndSim</option></select></label>
+        <label>시작할 때 기록 표를 비우는 메서드 이름 → <select class="ans" data-a="Init"><option></option><option>Init</option><option>Reset</option><option>EndSim</option></select></label>
+      </div>
+      <button class="btn primary check">채점</button>
+    </div>
+  </div>
+</section>
+
+<div class="part"><small>PART 2</small><h2>문법</h2></div>
+
+<section class="card" id="types" data-toc="데이터 타입 · 연산자">
+  <h2>주석 · 데이터 타입 · 연산자</h2>
+  <pre class="code">-- 한 줄 주석
+/* 여러 줄
+   주석 */
+var i : integer := 0        -- 선언 (SimTalk 2.0)
+var name : string
+var t : time := 6 * 60</pre>
+  <div class="tbl"><table class="t">
+    <tr><th>타입</th><th>뜻</th><th>타입</th><th>뜻</th></tr>
+    <tr><td>integer</td><td>정수</td><td>real</td><td>실수 (3.1415)</td></tr>
+    <tr><td>boolean</td><td>true / false</td><td>string</td><td>문자·숫자·특수문자</td></tr>
+    <tr><td>time</td><td>시간 (초)</td><td>date / datetime</td><td>dd.MM.yyyy (HH:mm:ss)</td></tr>
+    <tr><td>length / speed / acceleration</td><td>Conveyor·Track·Transporter 단위</td><td>money</td><td>실수</td></tr>
+    <tr><td>object</td><td>모델·객체 참조</td><td>list / queue / stack / table</td><td>DataList·Queue·Stack·Table 성질</td></tr>
+  </table></div>
+  <div class="cols">
+    <div class="box"><h4>산술</h4><code>+ − * /</code>, <code>div</code> (정수 나눗셈), <code>mod</code> (나머지), 문자열 <code>+</code> (이어 붙이기), <code>x += y</code> · <code>-=</code> · <code>*=</code></div>
+    <div class="box"><h4>비교·논리</h4><code>= &lt;&gt; &lt; &gt; &lt;= &gt;=</code>, <code>and or not</code>. SimTalk 2.0 에서 <b>대입은 <code>:=</code>, 비교는 <code>=</code></b></div>
+  </div>
+  <div class="lab-box">
+    <div class="lh"><span class="pill">연습 2</span><b>값 계산</b></div>
+    <div class="q" data-id="c5-ops" data-title="SimTalk 연산자">
+      <div class="ans-row">
+        <label><code>1 + 2 * 3</code> = <input class="ans" data-a="7" data-tol="0"></label>
+        <label><code>(1 + 2) * 3</code> = <input class="ans" data-a="9" data-tol="0"></label>
+        <label><code>17 div 5</code> = <input class="ans" data-a="3" data-tol="0"></label>
+        <label><code>17 mod 5</code> = <input class="ans" data-a="2" data-tol="0"></label>
+        <label><code>6.123 mod 2.5</code> = <input class="ans" data-a="1.123" data-tol="0.0005"></label>
+        <label><code>7 / 2</code> = <input class="ans" data-a="3.5" data-tol="0"></label>
+      </div>
+      <button class="btn primary check">채점</button>
+    </div>
+  </div>
+</section>
+
+<section class="card" id="flow" data-toc="분기 · 반복 · 함수">
+  <h2>분기 · 반복 · 함수</h2>
+  <div class="cols">
+    <div><h4>if</h4><pre class="code">if vWIP > 5
+  print "붐빔"
+elseif vWIP > 0
+  print "보통"
+else
+  print "한산"
+end</pre></div>
+    <div><h4>switch (case)</h4><pre class="code">switch @.aNoRecipes
+case 1
+  ?.ProcTime := 3 * 60
+case 2, 3
+  ?.ProcTime := 5 * 60
+else
+  ?.ProcTime := 0
+end</pre></div>
+  </div>
+  <div class="cols">
+    <div><h4>while (조건 먼저)</h4><pre class="code">while i < 10
+  i += 1
+end</pre></div>
+    <div><h4>repeat (조건 나중 — 최소 1번)</h4><pre class="code">repeat
+  i += 1
+until i >= 10</pre></div>
+    <div><h4>for</h4><pre class="code">for i := 1 to 10
+  s += i
+next</pre></div>
+  </div>
+  <h4>함수: 인자 넘기기와 돌려주기</h4>
+  <pre class="code">-- Method 이름: getMax
+param number1: integer, number2: integer -> integer
+if number1 > number2
+  return number1      -- 또는 result := number1
+else
+  return number2
+end
+
+-- 다른 메서드에서 부르기
+print getMax(3, 9)    -- 9</pre>
+  <h4>문자열·수학 함수 (자주 쓰는 것)</h4>
+  <div class="tbl"><table class="t small">
+    <tr><td><code>strLen(s)</code></td><td>길이</td><td><code>copy(s, 위치, 개수)</code></td><td>부분 문자열</td><td><code>pos(찾을것, s)</code></td><td>위치 (없으면 0)</td></tr>
+    <tr><td><code>to_str(x)</code></td><td>숫자 → 문자열</td><td><code>str_to_num(s)</code></td><td>문자열 → 숫자</td><td><code>omit / incl</code></td><td>지우기 / 끼우기</td></tr>
+    <tr><td><code>abs, sqrt, pow, exp, ln</code></td><td>수학</td><td><code>round, floor, ceil</code></td><td>반올림 등</td><td><code>z_uniform(스트림, a, b)</code></td><td>난수 (3장 스트림)</td></tr>
+  </table></div>
+  <div class="lab-box">
+    <div class="lh"><span class="pill">연습 3</span><b>코드 읽기 — 출력은? (아래 실행기로 확인)</b></div>
+    <div class="q" data-id="c5-read" data-title="SimTalk 코드 읽기">
+      <div class="cols">
+        <div><pre class="code">var i, s : integer
+for i := 1 to 5
+  if i mod 2 = 1
+    s += i
+  end
+next
+print s</pre><label>출력 <input class="ans" data-a="9" data-tol="0"></label></div>
+        <div><pre class="code">var k : integer := 10
+repeat
+  k -= 3
+until k < 0
+print k</pre><label>출력 <input class="ans" data-a="-2" data-tol="0"></label></div>
+        <div><pre class="code">var n : integer := 2
+switch n
+case 1
+  print 10
+case 2, 3
+  print 20
+else
+  print 30
+end</pre><label>출력 <input class="ans" data-a="20" data-tol="0"></label></div>
+      </div>
+      <button class="btn primary check">채점</button>
+    </div>
+    <div class="mini">
+      <div class="ctrl"><b>SimTalk 실행기</b> (연습용 부분집합 · 실제 Method 편집기는 Plant Sim 연습장에)</div>
+      <textarea id="st-code" spellcheck="false" style="width:100%;min-height:150px;font:13px/1.5 var(--mono);border:1px solid var(--line-2);border-radius:8px;padding:8px;margin-top:8px">var i, s : integer
+for i := 1 to 5
+  if i mod 2 = 1
+    s += i
+  end
+next
+print s</textarea>
+      <div class="ctrl" style="margin-top:6px"><button class="btn primary sm" id="st-run">실행</button><span class="hint">print 결과와 오류(행 번호)가 아래에 나와요</span></div>
+      <pre class="code" id="st-out" style="min-height:40px"></pre>
+    </div>
+  </div>
+</section>
+
+<div class="part"><small>PART 3</small><h2>메서드를 부르는 방법</h2></div>
+
+<section class="card" id="call" data-toc="센서 · 컨트롤 · MethCall">
+  <h2>메서드 호출: 센서 · 컨트롤 · 시간 지연</h2>
+  <div class="tbl"><table class="t">
+    <tr><th>방법</th><th>언제 실행</th><th>예</th></tr>
+    <tr><td><b>Entrance control</b></td><td>MU 가 객체에 들어올 때</td><td>도착 시각 기록, <code>?.ProcTime</code> 설정</td></tr>
+    <tr><td><b>Exit control</b></td><td>MU 가 나갈 준비가 될 때 — 메서드가 <code>@.move(목적지)</code> 로 직접 보냄</td><td>타입별 라우팅</td></tr>
+    <tr><td><b>Sensor</b></td><td>Line·Track 위 특정 위치를 MU 가 지날 때</td><td>컨베이어 출구에서 확률 0.7 로 bf21 (2장 예제 5)</td></tr>
+    <tr><td>Init / Reset / EndSim</td><td>EventController 사건</td><td>초기화, 결과 계산</td></tr>
+    <tr><td><code>&amp;ref.MethCall(시간, 인자)</code></td><td>지정한 시간 뒤에</td><td>10분 뒤 고장 복구. 경로·이름으로 직접 쓰면 즉시 호출되므로 <code>&amp;</code> 로 참조를 넘김</td></tr>
+  </table></div>
+  <h3>Exit control 로 라우팅</h3>
+  <pre class="code">-- Buffer 의 Exit control: 타입별로 보낼 곳을 정함
+if @.Name = "PartA"
+  @.move(StationA)
+else
+  @.move(StationB)
+end</pre>
+  <div class="ps-lab" data-guide="simtalk" data-note="연습장의 Method 편집기는 줄 번호·문법 검사·실행(Run)·오류 행 표시를 지원해요. 시뮬레이션 중 메서드 오류가 나면 해당 메서드가 오류 행과 함께 열려요."></div>
+</section>
+
+<section class="card" id="timebased" data-toc="코드로 시간가중 평균">
+  <h2>시간 기반 자료를 코드로 계산하기</h2>
+  <p>Variable 의 Statistics 대신 직접 계산할 수도 있어요: 값이 바뀔 때마다 (이전 값 × 지속시간) 을 더하고 끝에 총시간으로 나눔. 4장 \(\bar L_q = \sum q_k v_k / (t_n - t_0)\) 그대로예요.</p>
+  <pre class="code">-- vWIP 를 바꾸기 직전에 부르는 메서드 mAccWIP
+vArea += vWIP * (EventController.SimTime - vLastT)
+vLastT := EventController.SimTime
+
+-- EndSim
+vAvgWIP := vArea / EventController.SimTime</pre>
+</section>
+
+<section class="card" id="v1v2" data-toc="SimTalk 2.0 vs 1.0">
+  <h2>SimTalk 2.0 vs SimTalk 1.0</h2>
+  <div class="tbl"><table class="t">
+    <tr><th></th><th>SimTalk 1.0</th><th>SimTalk 2.0</th></tr>
+    <tr><td>선언</td><td><code>is i : integer; do … end;</code></td><td><code>var i : integer</code> (본문 어디서나)</td></tr>
+    <tr><td>인자 · 반환</td><td><code>(a : integer) : integer is do … end;</code></td><td><code>param a : integer -> integer</code></td></tr>
+    <tr><td>분기</td><td><code>if … then … end;</code> · <code>inspect … when … then … end;</code></td><td><code>if … end</code> (then 생략 가능) · <code>switch … case … end</code></td></tr>
+    <tr><td>반복</td><td><code>while … loop … end;</code></td><td><code>while … end</code></td></tr>
+    <tr><td>문장 끝</td><td><code>;</code> 필수</td><td>줄바꿈 (세미콜론 생략)</td></tr>
+  </table></div>
+  <p class="hint">버전 표기는 강의 슬라이드 24~26쪽 표로 한 번 더 확인하세요.</p>
+</section>
+
+<section class="card" id="quiz" data-toc="5장 확인 문제">
+  <h2>5장 확인 문제</h2>
+  <div class="lab-box">
+    <div class="lh"><span class="pill">확인</span><b>상황 문제</b></div>
+    <div class="q" data-id="c5-q1" data-title="Exit control 동작">
+      <p>Buffer 의 Exit control 에서 <code>@.move(StationA)</code> 를 했는데 StationA 가 바쁘다. 어떻게 될까?</p>
+      <div class="choices" data-a="1"><button>MU 가 사라진다</button><button>move 가 실패(false)하고 MU 는 Buffer 에 남는다 — 자리가 나면 다시 시도해야 한다</button><button>자동으로 StationB 로 간다</button></div>
+    </div>
+    <div class="q" data-id="c5-q2" data-title="오류 찾기">
+      <p><code>if @.aNoRecipes = 1 then ?.ProcTime = 180 end</code> 의 문제는?</p>
+      <div class="choices" data-a="2"><button>then 을 쓰면 안 된다</button><button>@ 대신 ? 를 써야 한다</button><button><code>?.ProcTime = 180</code> 은 비교라서 값이 안 바뀐다 — 대입은 <code>:=</code></button></div>
+    </div>
+    <div class="q" data-id="c5-q3" data-title="익명 식별자 ?">
+      <p>같은 메서드 mProc 를 SingleProc 3대의 Entrance control 에 모두 연결했다. 메서드 안에서 "지금 어느 스테이션인지" 알려면?</p>
+      <div class="choices" data-a="0"><button><code>?.Name</code></button><button><code>@.Name</code></button><button><code>root.Name</code></button></div>
+    </div>
+  </div>
+</section>
+
+<nav class="ch-nav"></nav>
+    </main>
+  </div>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const run = () => { const out = document.getElementById('st-out'); try { const r = SIMTALK.run(document.getElementById('st-code').value, {}); out.textContent = r.out.length ? r.out.join('\n') : '(출력 없음)'; out.style.color = ''; } catch (e) { out.textContent = `${e.line ? e.line + '행: ' : ''}${e.message}`; out.style.color = '#b42318'; } };
+  document.getElementById('st-run').onclick = run;
+  document.getElementById('st-code').addEventListener('keydown', e => { if (e.key === 'Tab') { e.preventDefault(); const t = e.target, s = t.selectionStart; t.setRangeText('  ', s, t.selectionEnd, 'end'); } });
+});
+</script>
+<script src="assets/notes.js?v=1"></script>
+</body>
+</html>

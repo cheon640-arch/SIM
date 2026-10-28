@@ -1,0 +1,388 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>03 입력 모델링 · sim notebook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=Gaegu:wght@400;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="assets/style.css?v=2"><link rel="stylesheet" href="assets/notes-tools.css?v=1">
+<script src="assets/des.js?v=1"></script><script src="assets/plot.js?v=1"></script><script src="assets/app.js?v=2"></script>
+<style>
+  .two { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
+  .plotbox { border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; background: #fff; }
+  .plotbox h4 { margin: 2px 0 4px; font-size: 13.5px; }
+  textarea.data { width: 100%; min-height: 70px; font: 13px var(--mono); border: 1px solid var(--line-2); border-radius: 8px; padding: 8px; }
+  .lcg-seq { display: flex; flex-wrap: wrap; gap: 4px; margin: 8px 0; }
+  .lcg-seq span { font: 13px var(--mono); padding: 3px 7px; border-radius: 6px; background: #f1efed; }
+  .lcg-seq span.rep { background: var(--red-tint); color: #b42318; }
+  .cond { display: grid; gap: 4px; font-size: 14px; margin-top: 6px; }
+  .cond .ok { color: #0f6b3a; } .cond .no { color: #b42318; }
+</style>
+</head>
+<body data-ch="03">
+<div class="wrap">
+  <div class="hero">
+    <div class="kicker">Chapter 03 · Input Modeling</div>
+    <h1 class="display">입력 모델링</h1>
+    <p class="lede">시뮬레이션에 넣을 "도착 간격 6분 지수분포" 같은 입력은 어디서 올까요? 원자료에서 분포를 고르고(피팅), 맞는지 확인하고(P-P·Q-Q), 컴퓨터가 그 분포의 난수를 어떻게 만드는지(LCG · 역변환 · 채택-기각)까지 직접 손으로 해 봅니다.</p>
+    <div class="meta">강의자료 Chap 3 · 실습 8개 · 데이터 붙여넣기 지원</div>
+  </div>
+  <div class="page-grid">
+    <aside class="toc"></aside>
+    <main class="lesson">
+
+<div class="part"><small>PART 1</small><h2>분포 고르기</h2></div>
+
+<section class="card" id="dist" data-toc="이산 vs 연속 · 분포 모음">
+  <h2>이산 vs 연속 · 자주 쓰는 분포</h2>
+  <div class="cols">
+    <div class="box"><h4>이산 (Discrete)</h4>셀 수 있는 값. <b>Bernoulli, Binomial, 이산균등(a,b) 또는 (v1…vn), Geometric, Negative Binomial(r,p), Poisson</b><br><span class="hint">예: 한 번에 오는 손님 수, 불량 개수, 레시피 수</span></div>
+    <div class="box"><h4>연속 (Continuous)</h4>구간 안의 아무 실수. <b>Beta, Erlang, Exponential, Gamma, Lognormal, Uniform, Normal, Triangular, Weibull</b><br><span class="hint">예: 서비스 시간, 도착 간격, 고장까지 시간</span></div>
+  </div>
+  <div class="tbl"><table class="t">
+    <tr><th>분포</th><th>언제 쓰나</th><th>Plant Sim 이름</th></tr>
+    <tr><td>지수 Exponential</td><td>포아송 도착의 간격, 무기억성. CV = 1</td><td>Negexp</td></tr>
+    <tr><td>균등 Uniform</td><td>최소·최대만 알 때 (자료 없음)</td><td>Uniform</td></tr>
+    <tr><td>삼각 Triangular</td><td>최소·최빈·최대 전문가 추정</td><td>Triangle</td></tr>
+    <tr><td>정규 Normal</td><td>여러 요인의 합, 대칭 (음수 주의 → 잘라 쓰기)</td><td>Normal</td></tr>
+    <tr><td>로그정규 Lognormal</td><td>오른쪽 꼬리가 긴 작업시간</td><td>Lognorm</td></tr>
+    <tr><td>얼랑 Erlang</td><td>지수 k개의 합 (k단계 작업). CV = 1/√k</td><td>Erlang</td></tr>
+    <tr><td>와이블 Weibull</td><td>고장까지 시간 (형상모수로 고장률 증가/감소)</td><td>Weibull</td></tr>
+  </table></div>
+  <div class="lab-box">
+    <div class="lh"><span class="pill">연습 1</span><b>모양 감 잡기 — 5,000개 뽑아 히스토그램</b></div>
+    <div class="mini">
+      <div class="ctrl" id="g-ctrl"></div>
+      <div id="g-plot"></div>
+      <div class="out" id="g-out"></div>
+    </div>
+    <div class="q" data-id="c3-dc" data-title="이산/연속 구분">
+      <p>"하루에 들어오는 주문 건수"를 입력으로 넣으려 한다. 연속분포(예: 정규)를 그대로 피팅하면?</p>
+      <div class="choices" data-a="1"><button>문제 없다 — 정규분포가 제일 무난하다</button><button>이산 자료에 연속분포를 피팅하는 실수 — 포아송·이항 같은 이산분포나 경험분포를 검토해야 한다</button></div>
+    </div>
+  </div>
+</section>
+
+<section class="card" id="steps" data-toc="입력 모델링 절차">
+  <h2>입력 모델링 절차</h2>
+  <ol>
+    <li>모델링할 프로세스를 문서화</li>
+    <li>자료 수집 계획 → 수집</li>
+    <li><b>그래프·통계 분석</b> (히스토그램, 기술통계, 시간 추세, 독립성)</li>
+    <li>후보 분포 가정</li>
+    <li>모수 추정</li>
+    <li><b>적합도 검정</b> (P-P, Q-Q, 검정 통계)</li>
+    <li>입력이 출력에 얼마나 민감한지 확인</li>
+  </ol>
+  <p>Plant Sim 에선 <b>Statistical Tools</b> 라이브러리의 <b>DataFit</b>: 자료 붙여넣기/파일 → Bounds·Offset 조정 → 기술통계 → 히스토그램(셀 크기 변경) → 분포 피팅·가설검정·추천 → Evaluation → Report.</p>
+  <div class="ps"><b>서비스 시간 자료를 볼 때 물을 것</b> — 단위는? (초) · 가능한 최소 서비스 시간은? (0보다 클 것 → Offset) · 흔한 서비스 시간 분포는? (지수, 감마/얼랑, 로그정규, 와이블…)</div>
+</section>
+
+<section class="card" id="fit" data-toc="자료 분석·피팅 실습">
+  <h2>자료 분석 · 분포 피팅 (DataFit 따라 하기)</h2>
+  <p>아래는 커피 부스 서비스 시간 <b>연습용 자료 100개</b>(분). 자기 자료가 있으면 붙여 넣어도 돼요 (쉼표·공백·줄바꿈 구분).</p>
+  <textarea class="data" id="f-data"></textarea>
+  <div class="ctrl" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:6px 0;font-size:14px">
+    <button class="btn primary sm" id="f-go">분석</button>
+    <button class="btn sm" id="f-reset">연습 자료로 되돌리기</button>
+    <label>히스토그램 칸 수 <input type="range" id="f-bins" min="4" max="30" value="12"> <span id="f-binsv">12</span></label>
+    <label>후보 분포 <select id="f-cand"><option value="exp">지수</option><option value="norm">정규</option><option value="logn">로그정규</option><option value="uni">균등</option></select></label>
+  </div>
+  <div class="mini" style="margin:6px 0"><div class="out" id="f-desc"></div></div>
+  <div class="two">
+    <div class="plotbox"><h4>① 히스토그램 + 후보 분포 밀도</h4><div id="p-hist"></div></div>
+    <div class="plotbox"><h4>② 관측 순서 (추세·정상성)</h4><div id="p-ts"></div></div>
+    <div class="plotbox"><h4>③ 지연 산점도 x(i) vs x(i+1) (독립성)</h4><div id="p-lag"></div></div>
+    <div class="plotbox"><h4>④ P-P 플롯 / Q-Q 플롯</h4><div id="p-pp"></div><div id="p-qq"></div></div>
+  </div>
+  <div class="lab-box">
+    <div class="lh"><span class="pill">연습 2</span><b>그래프 읽기</b></div>
+    <div class="q" data-id="c3-fit-num" data-title="연습 자료 기술통계">
+      <p>연습 자료(되돌리기 상태)의 값을 위 표에서 읽어 넣으세요.</p>
+      <div class="ans-row"><label>표본 평균 <input class="ans" id="ans-mean" data-a="0"></label><label>변동계수 CV <input class="ans" id="ans-cv" data-a="0"></label><label>지수분포 피팅 모수(평균) <input class="ans" id="ans-beta" data-a="0"></label></div>
+      <button class="btn primary check">채점</button>
+      <details class="sol"><summary>해설</summary><div>지수분포의 최우추정(MLE) 평균 = 표본 평균. CV ≈ 1 이면 지수분포가 그럴듯 (지수분포는 평균 = 표준편차).</div></details>
+    </div>
+    <div class="q" data-id="c3-fit-indep" data-title="지연 산점도 해석">
+      <p>지연 산점도에서 점들이 오른쪽 위로 뚜렷한 직선을 이룬다면?</p>
+      <div class="choices" data-a="2"><button>지수분포라는 증거다</button><button>정상성(stationary)이 확인된 것이다</button><button>lag-1 상관이 있다 → 자료가 독립이 아니다 (독립 가정 위반)</button></div>
+    </div>
+    <div class="q" data-id="c3-fit-pp" data-title="P-P 플롯 해석">
+      <p>연습 자료에 후보를 "정규"로 바꿔 보면 P-P/Q-Q 가 지수일 때보다 어떻게 되나?</p>
+      <div class="choices" data-a="0"><button>대각선에서 더 벗어난다 (특히 Q-Q 의 꼬리 부분) — 정규는 덜 맞는다</button><button>완전히 대각선 위에 올라간다</button></div>
+    </div>
+  </div>
+</section>
+
+<section class="card" id="ppqq" data-toc="P-P · Q-Q 손으로 그리기">
+  <h2>P-P 플롯 · Q-Q 플롯 손으로 그리기</h2>
+  <div class="cols">
+    <div class="def"><span class="tag">P-P plot</span>
+      <p>① 정렬 \(x_{(1)} \le \dots \le x_{(n)}\) ② 경험 CDF \(\tilde F_n(x_{(i)}) = \frac{i-0.5}{n}\) ③ 가정 분포 CDF \(\hat F(x_{(i)})\) ④ \(\hat F(x_{(i)})\) vs \(\tilde F_n(x_{(i)})\) 를 그림. <b>확률 vs 확률</b> → 분포 가운데가 잘 보임.</p></div>
+    <div class="def"><span class="tag">Q-Q plot</span>
+      <p>① 정렬 ② \(q_i = \frac{i-0.5}{n}\) ③ 가정 분포의 역CDF \(x_{q_i} = \hat F^{-1}(q_i)\) ④ \(x_{q_i}\) vs \(x_{(i)}\). <b>값 vs 값</b> → 꼬리가 잘 보임.</p></div>
+  </div>
+  <p>둘 다 <b>직선(대각선)에 가까우면</b> 가정한 분포가 잘 맞는다는 뜻.</p>
+  <div class="lab-box">
+    <div class="lh"><span class="pill">연습 3</span><b>관측 5개, Uniform(0, 2) 가정</b></div>
+    <p style="margin:0 0 6px">관측값: <b>1.5, 0.3, 1.9, 0.8, 0.6</b> &nbsp; (U(0,2) 의 CDF \(F(x) = x/2\), 역CDF \(F^{-1}(q) = 2q\))</p>
+    <div class="q" data-id="c3-ppqq" data-title="P-P/Q-Q 표 채우기">
+      <div class="tbl"><table class="t">
+        <tr><th>i</th><th class="num">\(x_{(i)}\) 정렬</th><th class="num">\((i-0.5)/n\)</th><th class="num">\(\hat F(x_{(i)})\)</th><th class="num">\(\hat F^{-1}(q_i)\)</th></tr>
+        <tr><td>1</td><td class="num"><input class="cell" data-a="0.3"></td><td class="num"><input class="cell" data-a="0.1"></td><td class="num"><input class="cell" data-a="0.15"></td><td class="num"><input class="cell" data-a="0.2"></td></tr>
+        <tr><td>2</td><td class="num"><input class="cell" data-a="0.6"></td><td class="num"><input class="cell" data-a="0.3"></td><td class="num"><input class="cell" data-a="0.3"></td><td class="num"><input class="cell" data-a="0.6"></td></tr>
+        <tr><td>3</td><td class="num"><input class="cell" data-a="0.8"></td><td class="num"><input class="cell" data-a="0.5"></td><td class="num"><input class="cell" data-a="0.4"></td><td class="num"><input class="cell" data-a="1"></td></tr>
+        <tr><td>4</td><td class="num"><input class="cell" data-a="1.5"></td><td class="num"><input class="cell" data-a="0.7"></td><td class="num"><input class="cell" data-a="0.75"></td><td class="num"><input class="cell" data-a="1.4"></td></tr>
+        <tr><td>5</td><td class="num"><input class="cell" data-a="1.9"></td><td class="num"><input class="cell" data-a="0.9"></td><td class="num"><input class="cell" data-a="0.95"></td><td class="num"><input class="cell" data-a="1.8"></td></tr>
+      </table></div>
+      <button class="btn primary check">채점</button>
+      <details class="sol"><summary>그래프 보기</summary><div><div class="two"><div id="h-pp"></div><div id="h-qq"></div></div>P-P: 점 (0.1,0.15), (0.3,0.3), (0.5,0.4), (0.7,0.75), (0.9,0.95) — 대각선 근처. Q-Q: (0.2,0.3), (0.6,0.6), (1.0,0.8), (1.4,1.5), (1.8,1.9).</div></details>
+    </div>
+  </div>
+  <h3>입력 모델링에서 기억할 것</h3>
+  <ul>
+    <li>이산 자료에 연속분포를 피팅하지 말 것</li>
+    <li>표준 분포가 좋지만, 안 맞으면 자료를 그대로 뽑는 <b>경험분포</b>도 가능 — 단 관측 범위 밖 값은 절대 안 나옴</li>
+    <li>자료에 의존성·비정상성(시간대별 변화)이 있으면 특별한 기법 필요</li>
+    <li><b>자료가 없으면</b> 전문가 의견: 최소·최대만 알면 균등, 최빈값까지 알면 삼각</li>
+    <li><b>민감도</b>: 단순한 입력 모델로 먼저 → 출력이 그 입력에 민감할 때만 자료를 더 모으고 모델을 다듬음</li>
+    <li>피팅 소프트웨어 결과가 내 판단을 대신하게 두지 말 것</li>
+  </ul>
+</section>
+
+<div class="part"><small>PART 2</small><h2>난수 만들기</h2></div>
+
+<section class="card" id="lcg" data-toc="LCG 의사난수">
+  <h2>선형합동생성기 (LCG)</h2>
+  <p>시뮬레이션의 난수는 사실 <b>결정적</b>인 수열이에요(의사난수, pseudo-random). 진짜 U(0,1) 과 통계적 성질이 같으면 충분.</p>
+  <div class="eq">\[ R_{i+1} = (a R_i + c) \bmod m, \qquad U_i = \frac{R_i}{m} \]</div>
+  <p>\(R_0\) = 시드(seed), \(a\) = 곱수(multiplier), \(c\) = 증분(increment), \(m\) = 모듈러스. 바라는 성질: 빠름 · U(0,1)에 가까움 · <b>주기가 길 것</b> · 0이나 상수로 퇴화하지 않음 · 같은 수열 재현 가능 · 부분수열(스트림) 선택 가능.</p>
+  <div class="def"><span class="tag">완전주기 정리 (Full period, 주기 = m)</span>
+    <p>다음 세 조건이 <b>모두</b> 성립할 때만:</p>
+    <p>① \(c\) 와 \(m\) 의 공약수는 1뿐 &nbsp; ② \(m\) 을 나누는 모든 소수 \(q\) 가 \(a-1\) 을 나눔 &nbsp; ③ 4가 \(m\) 을 나누면 4가 \(a-1\) 도 나눔</p></div>
+  <div class="lab-box">
+    <div class="lh"><span class="pill">연습 4</span><b>LCG 손계산 (강의 예제 1·2)</b></div>
+    <div class="q" data-id="c3-lcg1" data-title="LCG 예제 1">
+      <p>\(m=8, a=5, c=1, R_0=5\). 처음 네 개를 구하세요.</p>
+      <div class="ans-row"><label>\(R_1\) <input class="ans" data-a="2" data-tol="0"></label><label>\(U_1\) <input class="ans" data-a="0.25"></label><label>\(R_2\) <input class="ans" data-a="3" data-tol="0"></label><label>\(R_3\) <input class="ans" data-a="0" data-tol="0"></label><label>\(R_4\) <input class="ans" data-a="1" data-tol="0"></label><label>주기 <input class="ans" data-a="8" data-tol="0"></label></div>
+      <button class="btn primary check">채점</button>
+      <details class="sol"><summary>풀이</summary><div>\(R_1 = (5·5+1) \bmod 8 = 26 \bmod 8 = 2\) → 0.25. \(R_2 = 11 \bmod 8 = 3\), \(R_3 = 16 \bmod 8 = 0\), \(R_4 = 1\), 이어서 6, 7, 4, 5, 2 … — 0~7 이 한 번씩 다 나오고 반복 → 주기 8 (완전주기). 정리: c=1 과 8 은 서로소 ✓, 8 을 나누는 소수 2 가 a−1=4 를 나눔 ✓, 4|8 이고 4|4 ✓.</div></details>
+    </div>
+    <div class="q" data-id="c3-lcg2" data-title="LCG 예제 2">
+      <p>\(m=8, a=5, c=2, R_0=5\) 는 완전주기를 가질까? 깨지는 조건은?</p>
+      <div class="choices" data-a="0"><button>아니오 — 조건 ① 위반: c=2 와 m=8 이 공약수 2 를 가짐 (실제 주기 4: 3, 1, 7, 5, 3 …)</button><button>예 — a−1=4 가 4의 배수니까</button><button>아니오 — 조건 ③ 위반</button></div>
+    </div>
+    <div class="mini">
+      <div class="ctrl"><b>LCG 실험기</b><label>m <input id="l-m" type="number" value="16" style="width:64px"></label><label>a <input id="l-a" type="number" value="5" style="width:56px"></label><label>c <input id="l-c" type="number" value="3" style="width:56px"></label><label>R₀ <input id="l-r" type="number" value="7" style="width:56px"></label><button class="btn primary sm" id="l-go">생성</button></div>
+      <div class="lcg-seq" id="l-seq"></div>
+      <div class="cond" id="l-cond"></div>
+    </div>
+  </div>
+  <h3>난수 스트림과 시드 (Plant Simulation)</h3>
+  <ul>
+    <li>시드는 주기 안의 <b>시작 위치</b>. 서로 다른 시드 = 서로 다른 <b>스트림</b> → 도착용·서비스용처럼 용도별로 독립된 난수를 쓸 수 있음</li>
+    <li>전체 시뮬레이션 시드: EventController 설정</li>
+    <li>함수용 시드: 메뉴 <i>Random Number Seed Values</i> 표 — <code>z_uniform</code>, <code>z_normal</code> 등에만 적용. 예: <code>z_uniform(3, 1, 10)</code> = 스트림 3으로 1~10 균등난수</li>
+    <li>같은 시드 → 같은 결과 재현 (디버깅, 대안 비교 시 공통난수)</li>
+  </ul>
+</section>
+
+<section class="card" id="inv" data-toc="역변환법 (Inverse CDF)">
+  <h2>난수 → 원하는 분포: 역변환법</h2>
+  <p>방법 4가지: <b>역변환(Inverse CDF)</b>, 합성곱(Convolution — 예: 지수 k개 합 = 얼랑), <b>채택-기각(Acceptance/Rejection)</b>, 혼합(Composition).</p>
+  <div class="def"><span class="tag">역변환 알고리즘</span><p>1. \(U \sim U(0,1)\) 생성 &nbsp; 2. \(X = F^{-1}(U)\) 반환. (근거: \(X \sim F\) 이면 \(F(X) \sim U(0,1)\))</p></div>
+  <p><b>지수분포</b> (율 \(\lambda\), 평균 \(1/\lambda\)): \(F(x) = 1 - e^{-\lambda x}\) → \(U = 1 - e^{-\lambda X}\) → \[ X = -\frac{1}{\lambda}\ln(1-U) \]</p>
+  <p><b>이산 역변환</b>: CDF 표를 위에서부터 훑어 \(U \le F(x_i)\) 인 첫 \(x_i\) 반환.</p>
+  <div class="tbl"><table class="t" style="max-width:420px"><tr><th>\(x\)</th><th class="num">1</th><th class="num">2</th><th class="num">3</th><th class="num">4</th></tr><tr><td>\(f(x)\)</td><td class="num">0.4</td><td class="num">0.3</td><td class="num">0.2</td><td class="num">0.1</td></tr><tr><td>\(F(x)\)</td><td class="num">0.4</td><td class="num">0.7</td><td class="num">0.9</td><td class="num">1.0</td></tr></table></div>
+  <div class="lab-box">
+    <div class="lh"><span class="pill">연습 5</span><b>역변환 손계산</b></div>
+    <div class="q" data-id="c3-inv" data-title="역변환 계산">
+      <div class="ans-row" style="display:grid;gap:8px">
+        <label>평균 3분 지수분포, \(U = 0.6\) → \(X\) = <input class="ans" data-a="2.7489" data-tol="0.01"> 분</label>
+        <label>평균 3분 지수분포, \(U = 0.1\) → \(X\) = <input class="ans" data-a="0.3161" data-tol="0.01"> 분</label>
+        <label>이산 표, \(U = 0.55\) → \(X\) = <input class="ans" data-a="2" data-tol="0"></label>
+        <label>이산 표, \(U = 0.93\) → \(X\) = <input class="ans" data-a="4" data-tol="0"></label>
+        <label>이산 표, \(U = 0.40\) → \(X\) = <input class="ans" data-a="1" data-tol="0"></label>
+      </div>
+      <button class="btn primary check">채점</button>
+      <details class="sol"><summary>풀이</summary><div>\(-3\ln(0.4) = 2.749\), \(-3\ln(0.9) = 0.316\). 이산: 0.55 는 (0.4, 0.7] → 2, 0.93 은 (0.9, 1] → 4, 0.40 은 [0, 0.4] → 1 (경계 포함).</div></details>
+    </div>
+    <div class="mini">
+      <div class="ctrl"><b>U 를 직접 굴려 보기</b><label>평균 <input id="i-m" type="number" value="3" style="width:56px"></label><button class="btn primary sm" id="i-go">U 1,000개 → 역변환</button></div>
+      <div class="two"><div id="i-u"></div><div id="i-x"></div></div>
+      <p class="hint">왼쪽(U)은 평평한데 오른쪽(X = −m·ln(1−U))은 지수 모양. 같은 난수를 "모양만" 바꾼 것.</p>
+    </div>
+  </div>
+</section>
+
+<section class="card" id="ar" data-toc="채택-기각법">
+  <h2>채택-기각법 (Acceptance-Rejection)</h2>
+  <p>\(F^{-1}\) 을 구하기 어려울 때. 원하는 밀도 \(f(x)\) 를 위에서 덮는 <b>majorizing 함수</b> \(g(x) \ge f(x)\) 를 잡고, \(c = \int g\), \(h(x) = g(x)/c\) (뽑기 쉬운 분포).</p>
+  <ol><li>\(W \sim h\) 생성</li><li>\(U \sim U(0,1)\) 생성</li><li>\(U \cdot g(W) \le f(W)\) 이면 \(X = W\) 채택, 아니면 버리고 1로</li></ol>
+  <p><b>예제</b>: \(f(x) = \frac34(1-x^2)\), \(-1 \le x \le 1\). 최댓값 \(\frac34\) (x=0) → \(g(x) = \frac34\), \(c = \int_{-1}^{1}\frac34 dx = \frac32\), \(h(x) = \frac12\) = U(−1, 1). 알고리즘: \(W = -1 + 2U_1\), \(U_2\) 생성, \(\frac34 U_2 \le \frac34(1-W^2)\) 이면 채택. 채택 확률 = \(1/c = 2/3\).</p>
+  <div class="lab-box">
+    <div class="lh"><span class="pill">연습 6</span><b>채택? 기각?</b></div>
+    <div class="q" data-id="c3-ar" data-title="채택-기각 계산">
+      <div class="ans-row" style="display:grid;gap:8px">
+        <label>\(U_1 = 0.25\) → \(W\) = <input class="ans" data-a="-0.5"></label>
+        <label>\(f(W)\) = <input class="ans" data-a="0.5625" data-tol="0.005"></label>
+        <label>\(U_2 = 0.6\) 일 때 판정 <select class="ans" data-a="채택"><option></option><option>채택</option><option>기각</option></select></label>
+        <label>\(U_1 = 0.95,\ U_2 = 0.5\) 일 때 판정 <select class="ans" data-a="기각"><option></option><option>채택</option><option>기각</option></select></label>
+        <label>평균적으로 1개 얻는 데 필요한 시도 수 <input class="ans" data-a="1.5"></label>
+      </div>
+      <button class="btn primary check">채점</button>
+      <details class="sol"><summary>풀이</summary><div>W = −1 + 2(0.25) = −0.5, f = 0.75(1 − 0.25) = 0.5625. 0.75×0.6 = 0.45 ≤ 0.5625 → 채택. 두 번째: W = 0.9, f = 0.75(1 − 0.81) = 0.1425, 0.75×0.5 = 0.375 &gt; 0.1425 → 기각. 시도 수 기댓값 = c = 1.5.</div></details>
+    </div>
+    <div class="mini">
+      <div class="ctrl"><b>점 뿌리기</b><button class="btn primary sm" id="a-go">점 500개</button><button class="btn sm" id="a-clear">지우기</button></div>
+      <div id="a-plot"></div>
+      <div class="out" id="a-out"></div>
+    </div>
+  </div>
+</section>
+
+<section class="card" id="quiz" data-toc="3장 확인 문제">
+  <h2>3장 확인 문제</h2>
+  <div class="lab-box">
+    <div class="lh"><span class="pill">확인</span><b>상황 문제</b></div>
+    <div class="q" data-id="c3-q1" data-title="자료 없을 때">
+      <p>새 AMR 공정의 작업시간 자료가 없다. 현장 엔지니어가 "최소 50초, 보통 60초, 길어도 90초"라고 한다. 가장 적절한 입력은?</p>
+      <div class="choices" data-a="2"><button>정규(60, 10)</button><button>지수(평균 60)</button><button>삼각(50, 60, 90)</button><button>모델링 불가</button></div>
+    </div>
+    <div class="q" data-id="c3-q2" data-title="민감도">
+      <p>작업시간 분포를 삼각 → 로그정규로 바꿔도 처리량이 거의 같았다. 다음으로 할 일은?</p>
+      <div class="choices" data-a="1"><button>더 정확한 분포를 찾기 위해 자료를 대량 수집한다</button><button>출력이 이 입력에 둔감하므로 단순한 입력을 유지하고, 민감한 다른 입력에 노력을 쓴다</button></div>
+    </div>
+    <div class="q" data-id="c3-q3" data-title="시드 재현">
+      <p>버그를 찾으려고 같은 상황을 다시 보고 싶다. Plant Sim 에서?</p>
+      <div class="choices" data-a="0"><button>같은 시드(난수 스트림)로 다시 실행하면 똑같이 재현된다</button><button>난수는 진짜 무작위라 재현할 수 없다</button></div>
+    </div>
+    <div class="q" data-id="c3-q4" data-title="경험분포 한계">
+      <p>관측 자료(최대 7.2분)를 그대로 다시 뽑는 경험분포를 썼다. 생길 수 있는 문제는?</p>
+      <div class="choices" data-a="1"><button>평균이 틀려진다</button><button>7.2분보다 긴 드문 서비스가 시뮬레이션에서 절대 안 나와 꼬리 위험을 과소평가할 수 있다</button></div>
+    </div>
+  </div>
+</section>
+
+<nav class="ch-nav"></nav>
+    </main>
+  </div>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const S = window.SIM, fmt = S.fmt, $ = id => document.getElementById(id);
+  const stat = (l, v, s) => `<div class="stat"><div class="l">${l}</div><div class="v">${v}</div><div class="s">${s || ''}</div></div>`;
+
+  /* ---------- 분포 갤러리 ---------- */
+  const G = { exp: ['지수', { d: 'exp', m: 3 }], uni: ['균등', { d: 'uni', a: 1, b: 5 }], tri: ['삼각', { d: 'tri', a: 1, c: 2, b: 6 }], norm: ['정규', { d: 'norm', m: 3, s: 1 }], logn: ['로그정규', { d: 'logn', m: 3, s: 2 }], erlang: ['얼랑', { d: 'erlang', m: 3, k: 3 }] };
+  const P = { m: '평균', s: '표준편차', a: '최소', b: '최대', c: '최빈', k: 'k' };
+  let gk = 'exp', gd = JSON.parse(JSON.stringify(G.exp[1]));
+  function gctrl() {
+    $('g-ctrl').innerHTML = `<select id="g-sel">${Object.entries(G).map(([k, v]) => `<option value="${k}" ${k === gk ? 'selected' : ''}>${v[0]}</option>`).join('')}</select>` +
+      Object.keys(gd).filter(k => k !== 'd').map(k => `<label>${P[k]} <input type="number" step="any" data-k="${k}" value="${gd[k]}" style="width:60px"></label>`).join('') + `<button class="btn primary sm" id="g-go">뽑기</button>`;
+    $('g-sel').onchange = e => { gk = e.target.value; gd = JSON.parse(JSON.stringify(G[gk][1])); gctrl(); gdraw(); };
+    document.querySelectorAll('#g-ctrl input').forEach(i => i.oninput = () => { gd[i.dataset.k] = +i.value; });
+    $('g-go').onclick = gdraw;
+  }
+  function hist(xs, bins, lo, hi) { const w = (hi - lo) / bins, c = Array(bins).fill(0); xs.forEach(x => { const i = Math.min(bins - 1, Math.max(0, Math.floor((x - lo) / w))); c[i]++; }); return c.map((n, i) => [lo + i * w, lo + (i + 1) * w, n / xs.length / w]); }
+  function gdraw() {
+    const u = S.rng(Math.floor(Math.random() * 1e9)), xs = Array.from({ length: 5000 }, () => S.sample(gd, u));
+    const hi = Math.max(...xs.slice().sort((a, b) => a - b).slice(0, 4950)), lo = Math.min(0, Math.min(...xs));
+    const H = hist(xs.filter(x => x <= hi), 30, lo, hi);
+    PLOT($('g-plot'), { xmin: lo, xmax: hi, ymax: Math.max(...H.map(h => h[2])) * 1.1, series: [{ type: 'bar', data: H, color: '#62aef0' }], xlabel: '값', ylabel: '밀도' });
+    const m = xs.reduce((a, b) => a + b, 0) / xs.length, sd = Math.sqrt(xs.reduce((a, b) => a + (b - m) ** 2, 0) / (xs.length - 1));
+    $('g-out').innerHTML = stat('표본 평균', fmt(m, 3), '이론 ' + fmt(S.dMean(gd), 3)) + stat('표본 CV', fmt(sd / m, 3), '이론 ' + fmt(S.dCV(gd), 3)) + stat('최소 / 최대', fmt(Math.min(...xs), 2) + ' / ' + fmt(Math.max(...xs), 2)) + stat('Plant Sim', { exp: 'Negexp', uni: 'Uniform', tri: 'Triangle', norm: 'Normal', logn: 'Lognorm', erlang: 'Erlang' }[gk]);
+  }
+  gctrl(); gdraw();
+
+  /* ---------- 자료 분석 ---------- */
+  const practice = (() => { const u = S.rng(2026); return Array.from({ length: 100 }, () => +(S.sample({ d: 'exp', m: 3 }, u) + 0.05).toFixed(2)); })();
+  const pm = practice.reduce((a, b) => a + b, 0) / 100, psd = Math.sqrt(practice.reduce((a, b) => a + (b - pm) ** 2, 0) / 99);
+  $('ans-mean').dataset.a = pm.toFixed(3); $('ans-cv').dataset.a = (psd / pm).toFixed(3); $('ans-beta').dataset.a = pm.toFixed(3);
+  $('ans-mean').dataset.tol = $('ans-beta').dataset.tol = '0.02'; $('ans-cv').dataset.tol = '0.02';
+  const erf = x => { const t = 1 / (1 + .3275911 * Math.abs(x)), y = 1 - (((((1.061405429 * t - 1.453152027) * t) + 1.421413741) * t - .284496736) * t + .254829592) * t * Math.exp(-x * x); return x >= 0 ? y : -y; };
+  const Phi = z => .5 * (1 + erf(z / Math.SQRT2));
+  const PhiInv = p => { let lo = -8, hi = 8; for (let i = 0; i < 60; i++) { const m = (lo + hi) / 2; Phi(m) < p ? lo = m : hi = m; } return (lo + hi) / 2; };
+  function fitDist(kind, xs) {
+    const n = xs.length, m = xs.reduce((a, b) => a + b, 0) / n, sd = Math.sqrt(xs.reduce((a, b) => a + (b - m) ** 2, 0) / (n - 1));
+    if (kind === 'exp') return { name: `지수 (평균 ${fmt(m, 3)})`, pdf: x => x < 0 ? 0 : Math.exp(-x / m) / m, cdf: x => x < 0 ? 0 : 1 - Math.exp(-x / m), inv: q => -m * Math.log(1 - q) };
+    if (kind === 'norm') return { name: `정규 (${fmt(m, 3)}, σ ${fmt(sd, 3)})`, pdf: x => Math.exp(-.5 * ((x - m) / sd) ** 2) / (sd * Math.sqrt(2 * Math.PI)), cdf: x => Phi((x - m) / sd), inv: q => m + sd * PhiInv(q) };
+    if (kind === 'logn') { const ls = xs.filter(x => x > 0).map(Math.log), mu = ls.reduce((a, b) => a + b, 0) / ls.length, sg = Math.sqrt(ls.reduce((a, b) => a + (b - mu) ** 2, 0) / (ls.length - 1));
+      return { name: `로그정규 (ln 평균 ${fmt(mu, 3)}, ln σ ${fmt(sg, 3)})`, pdf: x => x <= 0 ? 0 : Math.exp(-.5 * ((Math.log(x) - mu) / sg) ** 2) / (x * sg * Math.sqrt(2 * Math.PI)), cdf: x => x <= 0 ? 0 : Phi((Math.log(x) - mu) / sg), inv: q => Math.exp(mu + sg * PhiInv(q)) }; }
+    const a = Math.min(...xs), b = Math.max(...xs);
+    return { name: `균등 (${fmt(a, 2)}, ${fmt(b, 2)})`, pdf: x => x < a || x > b ? 0 : 1 / (b - a), cdf: x => x < a ? 0 : x > b ? 1 : (x - a) / (b - a), inv: q => a + q * (b - a) };
+  }
+  function analyze() {
+    const xs = $('f-data').value.split(/[\s,;]+/).map(Number).filter(x => isFinite(x) && x !== '' );
+    if (xs.length < 5) { $('f-desc').innerHTML = stat('자료', xs.length + '개', '5개 이상 필요'); return; }
+    const n = xs.length, m = xs.reduce((a, b) => a + b, 0) / n, sd = Math.sqrt(xs.reduce((a, b) => a + (b - m) ** 2, 0) / (n - 1)), so = xs.slice().sort((a, b) => a - b);
+    const med = n % 2 ? so[(n - 1) / 2] : (so[n / 2 - 1] + so[n / 2]) / 2;
+    let num = 0; for (let i = 0; i < n - 1; i++) num += (xs[i] - m) * (xs[i + 1] - m); const r1 = num / ((n - 1) * sd * sd) * (n - 1) / n;
+    const bins = +$('f-bins').value, lo = Math.min(0, so[0]), hi = so[n - 1], H = hist(xs, bins, lo, hi), F = fitDist($('f-cand').value, xs);
+    $('f-desc').innerHTML = stat('개수 n', n) + stat('평균', fmt(m, 3)) + stat('표준편차', fmt(sd, 3)) + stat('CV', fmt(sd / m, 3), '지수면 ≈ 1') + stat('중앙값', fmt(med, 3)) + stat('최소 / 최대', fmt(so[0], 2) + ' / ' + fmt(hi, 2)) + stat('lag-1 상관', fmt(r1, 3), '0 근처면 독립') + stat('후보 피팅', F.name);
+    const curve = Array.from({ length: 120 }, (_, i) => { const x = lo + (hi - lo) * i / 119; return [x, F.pdf(x)]; });
+    PLOT($('p-hist'), { w: 460, h: 220, xmin: lo, xmax: hi, ymax: Math.max(...H.map(h => h[2]), ...curve.map(c => c[1]).filter(isFinite).slice(1)) * 1.1, series: [{ type: 'bar', data: H, color: '#62aef0' }, { type: 'line', data: curve.filter(c => isFinite(c[1])), color: '#f64932' }], legend: [['자료', '#62aef0'], ['후보 밀도', '#f64932']] });
+    PLOT($('p-ts'), { w: 460, h: 220, xmin: 1, xmax: n, ymax: hi * 1.05, series: [{ type: 'line', data: xs.map((x, i) => [i + 1, x]), color: '#615d59', w: 1 }, { type: 'pts', data: xs.map((x, i) => [i + 1, x]), r: 2.2 }], xlabel: '관측 번호 i' });
+    PLOT($('p-lag'), { w: 460, h: 220, xmin: 0, xmax: hi, ymax: hi, series: [{ type: 'pts', data: xs.slice(0, -1).map((x, i) => [x, xs[i + 1]]), r: 2.6 }], xlabel: 'x(i)', ylabel: 'x(i+1)' });
+    const pp = so.map((x, i) => [(i + .5) / n, F.cdf(x)]), qq = so.map((x, i) => [F.inv((i + .5) / n), x]);
+    PLOT($('p-pp'), { w: 230, h: 210, xmin: 0, xmax: 1, ymax: 1, xticks: 4, series: [{ type: 'line', data: [[0, 0], [1, 1]], color: '#bbb', w: 1, dash: '4 3' }, { type: 'pts', data: pp.map(p => [p[0], p[1]]), r: 2.2 }], xlabel: '경험 (i−0.5)/n', ylabel: '가정 F̂(x)' });
+    const qmax = Math.max(hi, ...qq.map(q => q[0]).filter(isFinite));
+    PLOT($('p-qq'), { w: 230, h: 210, xmin: 0, xmax: qmax, ymax: qmax, xticks: 4, series: [{ type: 'line', data: [[0, 0], [qmax, qmax]], color: '#bbb', w: 1, dash: '4 3' }, { type: 'pts', data: qq.filter(q => isFinite(q[0])), r: 2.2, color: '#1a9f5c' }], xlabel: '가정 분위수', ylabel: '자료 x(i)' });
+    document.getElementById('p-pp').style.display = document.getElementById('p-qq').style.display = 'inline-block';
+    document.getElementById('p-pp').style.width = document.getElementById('p-qq').style.width = '49%';
+  }
+  $('f-data').value = practice.join(', ');
+  $('f-go').onclick = analyze; $('f-cand').onchange = analyze;
+  $('f-bins').oninput = e => { $('f-binsv').textContent = e.target.value; analyze(); };
+  $('f-reset').onclick = () => { $('f-data').value = practice.join(', '); analyze(); };
+  analyze();
+
+  /* P-P / Q-Q 손 예제 그림 */
+  const hp = [[.1, .15], [.3, .3], [.5, .4], [.7, .75], [.9, .95]], hq = [[.2, .3], [.6, .6], [1, .8], [1.4, 1.5], [1.8, 1.9]];
+  PLOT($('h-pp'), { w: 260, h: 220, xmin: 0, xmax: 1, ymax: 1, xticks: 4, series: [{ type: 'line', data: [[0, 0], [1, 1]], color: '#bbb', w: 1, dash: '4 3' }, { type: 'pts', data: hp, r: 4 }], xlabel: 'P-P: (i−0.5)/n', ylabel: 'F̂(x)' });
+  PLOT($('h-qq'), { w: 260, h: 220, xmin: 0, xmax: 2, ymax: 2, xticks: 4, series: [{ type: 'line', data: [[0, 0], [2, 2]], color: '#bbb', w: 1, dash: '4 3' }, { type: 'pts', data: hq, r: 4, color: '#1a9f5c' }], xlabel: 'Q-Q: F̂⁻¹(q)', ylabel: 'x(i)' });
+
+  /* ---------- LCG ---------- */
+  const gcd = (a, b) => b ? gcd(b, a % b) : Math.abs(a);
+  const primes = n => { const p = []; for (let q = 2; q <= n; q++) if (n % q === 0) { p.push(q); while (n % q === 0) n /= q; } return p; };
+  $('l-go').onclick = () => {
+    const m = +$('l-m').value, a = +$('l-a').value, c = +$('l-c').value; let R = +$('l-r').value;
+    if (!(m > 1 && m <= 4096)) { $('l-seq').textContent = 'm 은 2~4096'; return; }
+    const seen = new Map(), seq = []; let i = 0;
+    while (!seen.has(R) && i < 300) { seen.set(R, i); seq.push(R); R = (a * R + c) % m; i++; }
+    const period = seen.has(R) ? i - seen.get(R) : '≥300';
+    $('l-seq').innerHTML = seq.slice(0, 64).map((r, j) => `<span title="U=${fmt(r / m, 4)}">${r}</span>`).join('') + (seen.has(R) ? `<span class="rep">${R} ↺</span>` : '') + (seq.length > 64 ? '<span>…</span>' : '');
+    const c1 = gcd(c, m) === 1, ps = primes(m), c2 = ps.every(q => (a - 1) % q === 0), c3 = m % 4 !== 0 || (a - 1) % 4 === 0;
+    $('l-cond').innerHTML = `<span class="${c1 ? 'ok' : 'no'}">${c1 ? '✓' : '✗'} ① gcd(c, m) = ${gcd(c, m)}</span><span class="${c2 ? 'ok' : 'no'}">${c2 ? '✓' : '✗'} ② m 의 소인수 {${ps.join(', ')}} 가 a−1 = ${a - 1} 을 나눔</span><span class="${c3 ? 'ok' : 'no'}">${c3 ? '✓' : '✗'} ③ ${m % 4 === 0 ? `4|m 이므로 4|(a−1)=${a - 1} ?` : '4 ∤ m (조건 해당 없음)'}</span>` +
+      `<b>정리 판정: ${c1 && c2 && c3 ? '완전주기 (= m)' : '완전주기 아님'} · 실제 주기 ${period}</b>`;
+  };
+  $('l-go').click();
+
+  /* ---------- 역변환 ---------- */
+  $('i-go').onclick = () => {
+    const m = +$('i-m').value || 3, u = S.rng(Math.floor(Math.random() * 1e9)), U = Array.from({ length: 1000 }, u), X = U.map(x => -m * Math.log(1 - x));
+    const hu = hist(U, 10, 0, 1), hx = hist(X.filter(x => x < m * 5), 20, 0, m * 5);
+    PLOT($('i-u'), { w: 280, h: 200, xmin: 0, xmax: 1, ymax: Math.max(...hu.map(h => h[2])) * 1.15, series: [{ type: 'bar', data: hu, color: '#ffb110' }], xlabel: 'U ~ U(0,1)' });
+    PLOT($('i-x'), { w: 280, h: 200, xmin: 0, xmax: m * 5, ymax: Math.max(...hx.map(h => h[2])) * 1.15, series: [{ type: 'bar', data: hx, color: '#62aef0' }, { type: 'line', data: Array.from({ length: 60 }, (_, i) => [i * m * 5 / 59, Math.exp(-(i * m * 5 / 59) / m) / m]), color: '#f64932' }], xlabel: 'X = −m ln(1−U)' });
+  };
+  $('i-go').click();
+
+  /* ---------- 채택-기각 ---------- */
+  let pts = [];
+  function adraw() {
+    const curve = Array.from({ length: 81 }, (_, i) => { const x = -1 + i / 40; return [x, .75 * (1 - x * x)]; });
+    PLOT($('a-plot'), { w: 520, h: 230, xmin: -1, xmax: 1, ymax: .8, series: [{ type: 'line', data: [[-1, .75], [1, .75]], color: '#615d59', w: 1, dash: '4 3' }, { type: 'pts', data: pts, r: 2.4, op: .75 }, { type: 'line', data: curve, color: '#000', w: 2 }], xlabel: 'W', ylabel: '¾·U₂', legend: [['채택 (곡선 아래)', '#1a9f5c'], ['기각', '#f64932']] });
+    const acc = pts.filter(p => p[2] === '#1a9f5c').length;
+    $('a-out').innerHTML = stat('시도', pts.length) + stat('채택', acc) + stat('채택률', pts.length ? fmt(acc / pts.length * 100, 1) + '%' : '—', '이론 66.7% (= 1/c)');
+  }
+  $('a-go').onclick = () => { for (let i = 0; i < 500; i++) { const w = -1 + 2 * Math.random(), y = .75 * Math.random(); pts.push([w, y, y <= .75 * (1 - w * w) ? '#1a9f5c' : '#f64932']); } adraw(); };
+  $('a-clear').onclick = () => { pts = []; adraw(); };
+  adraw();
+});
+</script>
+<script src="assets/notes.js?v=1"></script>
+</body>
+</html>

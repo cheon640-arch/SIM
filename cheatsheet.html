@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>치트시트 · sim notebook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="assets/style.css?v=2">
+<script src="assets/app.js?v=2"></script>
+<style>
+  .sheet { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; margin: 0 auto 16px; max-width: 1000px; columns: 2; column-gap: 22px; font-size: 12.5px; line-height: 1.45; }
+  .sheet h3 { font-size: 13.5px; margin: 8px 0 3px; color: var(--blue); break-after: avoid; }
+  .sheet .blk { break-inside: avoid; margin-bottom: 6px; }
+  .sheet ul { margin: 2px 0; padding-left: 16px; } .sheet li { margin: 1px 0; }
+  .sheet table { border-collapse: collapse; width: 100%; font-size: 12px; } .sheet td, .sheet th { border: 1px solid #ddd; padding: 2px 5px; text-align: left; }
+  .sheet .katex { font-size: 1.02em; }
+  @media print { @page { size: A4; margin: 10mm; } .hero, .site-header, footer.foot, .noprint { display: none !important; } .sheet { border: 0; padding: 0; max-width: none; font-size: 10.5px; } .sheet.p2 { break-before: page; } }
+  @media (max-width: 760px) { .sheet { columns: 1; } }
+</style>
+</head>
+<body data-page="cheat">
+<div class="wrap">
+  <div class="hero" style="padding-bottom:16px">
+    <div class="kicker">시험: A4 2장 요약지 허용 · 계산기 허용</div>
+    <h1 class="display" style="font-size:clamp(32px,5vw,52px)">치트시트</h1>
+    <p class="lede">인쇄하면 A4 두 장으로 나와요. 내 손으로 다시 정리할 때의 뼈대로 쓰세요.</p>
+    <p class="noprint"><button class="btn primary" onclick="print()">인쇄 / PDF 저장</button></p>
+  </div>
+  <div class="sheet p1">
+    <div class="blk"><h3>1. 개요</h3><ul><li>정의: 현실 시스템의 시간에 따른 동작을 흉내 · 분석 도구(변경 예측) / 설계 도구(새 시스템)</li><li>쓰지 말 것: 상식·공식으로 풀림, 직접 실험이 쉬움, 비용 &gt; 이득, 자료·시간·인력 부족, 과대 기대</li><li>단점: RIRO (Random in → Random out) → 통계 분석 필요</li><li>분류: Stochastic/Deterministic · Static/Dynamic · Discrete/Continuous → DES = 확률·동적·이산</li><li>구성요소: Structural(레이아웃) · Operating(기계·작업자) · Flowing(부품)</li><li>Event = 순간, 상태 변화 / Activity = 시간이 걸리는 작업</li><li>Verification = 제대로 만들었나 / Validation = 맞는 모델인가</li></ul></div>
+    <div class="blk"><h3>단일 서버 손계산</h3><p>시작 = max(도착, 앞 완료), 완료 = 시작 + 서비스, 대기 = 시작 − 도착</p></div>
+    <div class="blk"><h3>M/M/1</h3><p>\(\rho = \lambda/\mu\), \(L_q = \rho^2/(1-\rho)\), \(T_q = L_q/\lambda\), \(W = T_q + 1/\mu\), \(L = \lambda W\)<br>예) λ=1/6, μ=1/3 → ρ=0.5, Lq=0.5, Tq=3분</p></div>
+    <div class="blk"><h3>12단계</h3><p>문제 구성 → 목표·계획 → 개념화 → 자료 수집 → 모델 변환 → Verified? → Validated? → 실험 설계 → 실행·분석 → More runs? → 문서화 → 적용</p></div>
+    <div class="blk"><h3>2. 기본 모델링</h3><ul><li>Parameter: 안 바뀌는 성질(입력) · State: 스냅숏 · Entity: 움직이는 대상</li><li>Attribute = 개체의 성질 · Variable = 시스템의 성질</li><li>Source: 첫 도착, 간격, 한 번에 몇 개, 최대 수 · 포아송 → Negexp(평균 = 1/λ)</li><li>Exit strategy 기본 Cyclic · Non-blocking: 차 있으면 다음 후속 / Blocking: 기다림</li><li>합류: FIFO, 차 있으면 Forward Blocking List 에 등록</li><li>Assembly: Assembly table, Delete/Attach MUs, Main/New MU · Dismantle · Sorter(우선순위)</li><li>ParallelProc X-dim × Y-dim = 자리 수 · ExperimentManager: Output / Input / Experiments</li><li>운반: Conveyor(Line+TransferStation+센서) · Transporter+Track · Worker+WorkerPool+Broker+Workplace · AGV+AGVpool+Marker(tfWorkList) · Crane(Rack master+SR machine)</li></ul></div>
+    <div class="blk"><h3>예제 수치</h3><table><tr><td>예제1</td><td>레시피 50/30/20, 3/4/5분 → E[S] = 3.7</td></tr><tr><td>예제4</td><td>10명/h, 8분, 6칸, $500/칸, $3/명, $4,000/점원 → k=2</td></tr><tr><td>예제5</td><td>4개/h, 0.7 절단 LN(10,5), 굽힘 LN(20,5), 청동 3명 Tri(10,20,30) 버퍼10</td></tr><tr><td>예제6</td><td>0.6 → route {1,2}, 0.4 → {2}, aRoute · aCur</td></tr></table></div>
+  </div>
+  <div class="sheet p2">
+    <div class="blk"><h3>3. 입력 모델링</h3><ul><li>절차: 문서화 → 수집 계획 → 수집 → 그래프·통계 → 분포 가정 → 모수 추정 → 적합도 → 민감도</li><li>독립성: 지연 산점도 x(i) vs x(i+1) 직선이면 상관 · 정상성: 시간 추세</li><li>P-P: \(\hat F(x_{(i)})\) vs \((i-0.5)/n\) · Q-Q: \(\hat F^{-1}((i-0.5)/n)\) vs \(x_{(i)}\) — 직선이면 적합</li><li>이산 자료에 연속분포 X · 자료 없으면 균등(min,max)/삼각 · 경험분포는 범위 밖 값 없음</li></ul></div>
+    <div class="blk"><h3>LCG</h3><p>\(R_{i+1} = (aR_i + c) \bmod m\), \(U = R/m\). 완전주기 ⇔ ① gcd(c,m)=1 ② m 의 모든 소인수 | a−1 ③ 4|m ⇒ 4|a−1<br>m=8,a=5,c=1,R0=5: 2,3,0,1,6,7,4,5 (주기 8) · c=2: 3,1,7,5 (주기 4)</p></div>
+    <div class="blk"><h3>변량 생성</h3><ul><li>역변환: \(X = F^{-1}(U)\) · 지수 \(X = -\frac1\lambda\ln(1-U)\)</li><li>이산: \(U \le F(x_i)\) 인 첫 \(x_i\)</li><li>채택-기각: \(g \ge f\), \(c=\int g\), \(h = g/c\); \(W\sim h\), \(U\cdot g(W) \le f(W)\) 이면 채택. 채택률 1/c. 예) \(f=\frac34(1-x^2)\): g=3/4, c=3/2</li><li>그 밖에 합성곱(지수 k개 합 = 얼랑), 혼합</li><li>Plant Sim: z_uniform(스트림, a, b) — 시드 = 스트림 시작점</li></ul></div>
+    <div class="blk"><h3>4. 출력 분석</h3><ul><li>Within vs Across replication · 관측 \(\bar T = \frac1n\sum T_i\) · 시간 \(\bar L = \frac{\sum q_k v_k}{t_n - t_0}\)</li><li>Ex I: Tq = 18/5 = 3.6, Lq = 18/15 = 1.2 · Ex II: Tq = 39/8 = 4.875, Lq = 39/25 = 1.56</li><li>Finite(은행·주문 100개) vs Infinite(24h 공장·응급실) → 워밍업으로 초기화 편향 제거</li><li>CI: \(\bar X \pm t_{1-\alpha/2,n-1} S/\sqrt n\) · 반폭 비율법 \(n \approx n_0(h_0/\epsilon)^2\)</li><li>두 시스템: \(\hat D \pm t_{\hat\nu}\sqrt{S_1^2/n_1 + S_2^2/n_2}\), 0 포함 → 차이 단정 불가 · p &lt; α → H0 기각</li><li>최적화: 완전열거 10×10=100 (10분 16초) vs GA (3분 6초, 같은 해) · statAvgLifeSpan 은 Minimum</li></ul></div>
+    <div class="blk"><h3>5. SimTalk</h3><ul><li>예약: Reset · Init · EndSim / root · self · current · ?(부른 객체) · @(MU) · basis</li><li>대입 := · 비교 = · 17 div 5 = 3 · 17 mod 5 = 2 · 6.123 mod 2.5 = 1.123</li><li>if … elseif … else … end · switch/case · while … end · repeat … until · for i := 1 to n … next</li><li>param a: integer -> integer, return / result · &amp;m.MethCall(시간)</li><li>Entrance/Exit control · Sensor · Ctrl+Space 자동완성</li></ul></div>
+  </div>
+</div>
+</body>
+</html>

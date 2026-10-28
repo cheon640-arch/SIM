@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>02 기본 모델링 · sim notebook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=Gaegu:wght@400;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="assets/style.css?v=2"><link rel="stylesheet" href="assets/notes-tools.css?v=1">
+<script src="assets/des.js?v=1"></script><script src="assets/app.js?v=2"></script>
+</head>
+<body data-ch="02">
+<div class="wrap">
+  <div class="hero">
+    <div class="kicker">Chapter 02 · Basic Simulation Modeling</div>
+    <h1 class="display">기본 모델링</h1>
+    <p class="lede">개체(Entity)·속성(Attribute)·변수(Variable)로 시스템을 표현하고, 분기·합류·블로킹·조립·정렬·실험 관리자·운반 장비까지 Plant Simulation 의 기본 부품을 하나씩 익힙니다. 예제마다 브라우저에서 바로 돌려 볼 수 있어요.</p>
+    <div class="meta">강의자료 Chap 2 · 예제 1~6 · Plant Sim 실습 6개 · 계산 연습</div>
+  </div>
+  <div class="page-grid">
+    <aside class="toc"></aside>
+    <main class="lesson">
+
+<div class="part"><small>PART 1</small><h2>모델의 기본 단어</h2></div>
+
+<section class="card" id="terms" data-toc="시스템·파라미터·상태">
+  <h2>시스템 · 파라미터 · 상태 · 개체 · 속성 · 변수</h2>
+  <div class="tbl"><table class="t">
+    <tr><th>용어</th><th>뜻</th><th>커피 부스 예</th></tr>
+    <tr><td><b>System</b></td><td>공통 목표를 위해 시간에 걸쳐 함께 움직이는 연관 구성요소의 집합</td><td>드라이브스루 + 대기줄</td></tr>
+    <tr><td><b>Parameter</b></td><td>시스템의 바뀌지 않는 성질. 모델러가 통제 못 한다고 보는 값, 보통 <b>입력</b></td><td>평균 도착 간격 6분, 레시피 비율 50/30/20</td></tr>
+    <tr><td><b>System state</b></td><td>어떤 순간의 "스냅숏" — 앞으로의 진행을 결정하는 데 필요한 변수 값들</td><td>지금 줄 선 사람 수, 점원이 바쁜지</td></tr>
+    <tr><td><b>Entity</b></td><td>시스템 안에서 움직이며 사건을 일으키는 관심 대상</td><td>손님(차)</td></tr>
+    <tr><td><b>Attribute</b></td><td><b>개체에 붙은</b> 성질 (개체마다 값이 다름)</td><td>aNoRecipes (레시피 수), aArrTime (도착 시각)</td></tr>
+    <tr><td><b>Variable</b></td><td><b>시스템 전체</b>의 성질, 시간이 지나며 변함</td><td>vWIP (시스템 안 손님 수), vTotal (누적 손님 수)</td></tr>
+  </table></div>
+  <div class="ps"><b>외우는 법</b> — 변수:시스템 = 속성:개체. "A variable is to the system as an attribute is to an entity." Plant Sim 에서 Variable 은 스칼라, TableFile 은 1·2차원 표(배열)로 둬요.</div>
+  <div class="lab-box">
+    <div class="lh"><span class="pill">연습 1</span><b>무엇일까?</b></div>
+    <div class="q" data-id="c2-term" data-title="Entity/Attribute/Variable/Parameter 구분">
+      <div class="ans-row" style="display:grid;gap:8px">
+        <label>① 도어 라인에서 각 차량의 모델(A/B/C) <select class="ans" data-a="속성"><option></option><option>개체</option><option>속성</option><option>변수</option><option>파라미터</option></select></label>
+        <label>② 지금 라인 위에 있는 차량 대수 (WIP) <select class="ans" data-a="변수"><option></option><option>개체</option><option>속성</option><option>변수</option><option>파라미터</option></select></label>
+        <label>③ 모델 믹스 비율 A56:B22:C22 (실험 내내 고정) <select class="ans" data-a="파라미터"><option></option><option>개체</option><option>속성</option><option>변수</option><option>파라미터</option></select></label>
+        <label>④ 라인을 따라 흐르는 도어(차량) 자체 <select class="ans" data-a="개체"><option></option><option>개체</option><option>속성</option><option>변수</option><option>파라미터</option></select></label>
+        <label>⑤ 각 차량이 라인에 들어온 시각 <select class="ans" data-a="속성"><option></option><option>개체</option><option>속성</option><option>변수</option><option>파라미터</option></select></label>
+      </div>
+      <button class="btn primary check">채점</button>
+    </div>
+  </div>
+</section>
+
+<section class="card" id="create" data-toc="개체 생성 (Source)">
+  <h2>개체 만들기: Source</h2>
+  <p>Source 에서 정할 것 4가지: <b>첫 도착 시각</b>, <b>도착 간격</b>, <b>한 번에 생기는 개수</b>, <b>최대 도착 수</b>.</p>
+  <div class="def"><span class="tag">포아송 도착</span><p>도착이 포아송 과정이면 도착 <b>간격</b>은 지수분포, 평균 = 1 / 도착률. Plant Sim 에선 <code>Negexp</code> 분포로 넣어요.</p></div>
+  <div class="lab-box">
+    <div class="lh"><span class="pill">연습 2</span><b>Source Interval 값 정하기</b></div>
+    <div class="q" data-id="c2-negexp" data-title="Negexp 간격 계산">
+      <p>파이프 공장(예제 5): 부품이 시간당 평균 <b>4개</b> 포아송 도착. Plant Sim 은 기본 시간 단위가 초예요.</p>
+      <div class="ans-row">
+        <label>평균 간격 (분) <input class="ans" data-a="15"></label>
+        <label>Negexp Beta 에 넣을 값 (초) <input class="ans" data-a="900"></label>
+      </div>
+      <button class="btn primary check">채점</button>
+      <details class="sol"><summary>풀이</summary><div>1/4 시간 = 15분 = 900초. Plant Sim 입력 형식으로는 <code>15:00</code>.</div></details>
+    </div>
+  </div>
+</section>
+
+<div class="part"><small>PART 2</small><h2>기본 모델 예제</h2></div>
+
+<section class="card" id="ex1" data-toc="예제 1: 수정된 커피 부스">
+  <h2>예제 1 — 수정된 커피 부스 (속성 · TableFile · Method)</h2>
+  <p>손님마다 레시피 수가 달라요: 1개 50%, 2개 30%, 3개 20%. 서비스 시간은 지수분포지만 <b>평균이 레시피 수에 따라</b> 3 · 4 · 5분.</p>
+  <div class="ps-lab" data-guide="recipes" data-note="아래 순서를 연습장에서 그대로 해요. 1장 커피 부스 모델에서 시작합니다."></div>
+  <h3>Plant Sim 에서 만드는 순서</h3>
+  <ol>
+    <li><b>사용자 정의 개체</b>: MUs 의 Entity 를 복제 → MyObjects 폴더로 → 이름 바꾸기(myEntity) → 속성 <code>aNoRecipes</code> 추가</li>
+    <li>myEntity 에서 <b>파생(Derive)</b> myEntity1·2·3 만들고 aNoRecipes = 1, 2, 3</li>
+    <li><b>TableFile</b> tbEntity 에 MU 이름과 비율(0.5/0.3/0.2) → Source 의 MU selection 을 <b>Percentage</b> 로, 표 지정</li>
+    <li>처리시간을 타입별로: Processing time 을 TableFile/Formula 로 (aNoRecipes 에 따라 3·4·5분)</li>
+    <li><b>Variable</b>: vTotal(누적 손님), vWIP(시스템 안 손님)</li>
+    <li><b>Method</b>: <code>mCustArrival</code>(Source exit → 도착 시각 기록, vWIP+1), <code>mLeaveSys</code>(Drain entrance → 퇴장 시각, tbSystemLog 에 한 줄, vWIP−1)</li>
+    <li>Display/Chart 로 버퍼 대기 인원 모니터링, 평균 체류시간 보고</li>
+  </ol>
+  <pre class="code">-- mCustArrival (Source 의 Exit control)
+vTotal += 1
+vWIP   += 1
+@.aArrTime := EventController.SimTime   -- @ = 이 메서드를 부른 MU
+
+-- mLeaveSys (Drain 의 Entrance control)
+vWIP -= 1
+tbSystemLog.writeRow(1, tbSystemLog.yDim + 1, @.name, @.aNoRecipes,
+                     @.aArrTime, EventController.SimTime,
+                     EventController.SimTime - @.aArrTime)</pre>
+  <div class="note"><b class="t">디버깅 팁</b>Watch 창에서 <code>@</code> 는 메서드를 부른 MU, <code>?</code> 는 메서드를 부른 객체예요 (5장 익명 식별자).</div>
+  <div class="lab-box">
+    <div class="lh"><span class="pill">연습 3</span><b>기대 서비스 시간 → 시뮬레이션으로 확인</b></div>
+    <div class="q" data-id="c2-ex1" data-title="수정된 커피 부스 기대 서비스">
+      <div class="ans-row">
+        <label>기대 서비스 시간 E[S] (분) <input class="ans" data-a="3.7"></label>
+        <label>도착 간격 6분일 때 가동률 ρ <input class="ans" data-a="0.6167" data-tol="0.005"></label>
+      </div>
+      <button class="btn primary check">채점</button>
+      <details class="sol"><summary>풀이</summary><div>E[S] = 0.5×3 + 0.3×4 + 0.2×5 = 1.5 + 1.2 + 1.0 = <b>3.7분</b>. ρ = 3.7 / 6 = <b>0.617</b>. (서비스가 섞여 있어 더는 지수분포가 아니니 M/M/1 공식이 정확히 맞진 않아요 → 시뮬레이션이 필요한 이유!)</div></details>
+    </div>
+      </div>
+</section>
+
+<section class="card" id="branch" data-toc="분기·합류·블로킹">
+  <h2>분기(Diverging) · 합류(Converging) · 블로킹</h2>
+  <div class="cols">
+    <div class="box"><h4>분기 — 기본 Exit strategy</h4>후속 객체가 여럿이면 <b>차례로(Cyclic)</b> 보냄. Exit strategy 를 바꾸거나 FlowControl 객체로 변경. MU 속성(예: aNoRecipes)으로 갈 곳을 정할 수도 있음. Source·Buffer·SingleProc·FlowControl 등이 분기점이 될 수 있어요.</div>
+    <div class="box"><h4>합류</h4>여러 곳에서 들어오면 <b>도착 순서(FIFO)</b>대로. 후속 객체가 차 있으면 MU 는 그 객체의 <b>Forward Blocking List</b> 에 이름을 올리고 기다림.</div>
+  </div>
+  <div class="tbl"><table class="t">
+    <tr><th>Exit strategy</th><th>후속 객체가 차 있으면</th></tr>
+    <tr><td><b>Non-blocking</b> (기본값)</td><td>다음 후속 객체로 넘어가 보냄 — 빈 곳 아무 데나</td></tr>
+    <tr><td><b>Blocking</b></td><td>정해진 후속 객체가 빌 때까지 <b>기다림</b> → 그 동안 이 스테이션은 <span class="pill amber">Blocked</span> 상태</td></tr>
+  </table></div>
+  <p>직렬 라인에서 스테이션 사이 버퍼가 0이면 다음 스테이션이 바쁠 때 앞 스테이션은 일을 끝내고도 부품을 못 넘겨서 Blocked 가 돼요. 컨베이어 AS-IS 라인의 핵심 손실이 이거예요.</p>
+  <div class="lab-box">
+    <div class="lh"><span class="pill">연습 4</span><b>버퍼 크기와 블로킹</b></div>
+    <div class="ps-lab" data-guide="block"></div>
+    <div class="q" data-id="c2-block" data-title="블로킹 해석">
+      <p>버퍼를 0 → 5로 늘렸을 때 일어나는 일로 옳은 것은?</p>
+      <div class="choices" data-a="2"><button>Station2 의 처리시간이 짧아진다</button><button>Station1 의 Blocked 비율이 늘어난다</button><button>Station1 의 Blocked 비율이 줄고 처리량이 도착률에 가까워진다</button><button>아무 변화 없다 — 평균 처리시간이 같으니까</button></div>
+      <details class="sol"><summary>해설</summary><div>버퍼는 두 스테이션의 <b>변동</b>을 서로 떼어 놓는(decoupling) 역할. 평균 능력은 같아도 버퍼가 없으면 "앞은 끝났는데 뒤가 바쁨"·"뒤는 놀고 있는데 앞이 아직" 상황이 생겨 처리량을 잃어요. 팀 프로젝트의 "버퍼 0/2/5/10" 실험이 바로 이것.</div></details>
+    </div>
+  </div>
+</section>
+
+<section class="card" id="ex2" data-toc="예제 2: 밀링 병목">
+  <h2>예제 2 — 밀링 병목과 병렬 스테이션</h2>
+  <p>CutToSize → Milling 순서인데 Milling 이 병목이라 더 효율적인 두 번째 밀링기(3분)를 병렬로 추가하려 해요. CutToSize 다음에 두 밀링기로 <b>분기</b>, 각자 처리시간이 달라요.</p>
+  <div class="def"><span class="tag">병목 찾기</span><p>스테이션별 이용률 \(\rho_i = \lambda \cdot E[S_i] / c_i\) 가 가장 큰 곳이 병목. \(\rho \ge 1\) 이면 대기열이 끝없이 늘어요.</p></div>
+  <div class="lab-box">
+    <div class="lh"><span class="pill">연습 5</span><b>병목 계산 → 기계 추가 효과</b></div>
+    <div class="q" data-id="c2-mill" data-title="밀링 병목 이용률">
+      <p>도착 평균 5분 간격, CutToSize 균등(3,5), Milling 균등(5,7).</p>
+      <div class="ans-row">
+        <label>CutToSize ρ <input class="ans" data-a="0.8"></label>
+        <label>Milling ρ (1대) <input class="ans" data-a="1.2"></label>
+        <label>두 번째 밀링기(평균 3분) 추가 후 밀링 "능력"(개/분) <input class="ans" data-a="0.5" data-tol="0.01"></label>
+      </div>
+      <button class="btn primary check">채점</button>
+      <details class="sol"><summary>풀이</summary><div>CutToSize: 4/5 = 0.8. Milling: 6/5 = <b>1.2 &gt; 1</b> → 불안정(병목). 추가 후 능력 = 1/6 + 1/3 = 0.5개/분 &gt; 도착률 0.2개/분 → 안정. Plant Sim 실습에서 Milling2 를 추가해 확인해요.</div></details>
+    </div>
+      </div>
+  <div class="ps-lab" data-guide="mill"></div>
+  <h3>재귀 모델: 약사는 한 번에 레시피 1개만</h3>
+  <p>손님이 레시피 하나를 받으면 남은 레시피가 있을 때 <b>다시 줄 뒤로</b> 가요. 구현: TakeCoffee 에 들어갈 때 <code>mJobProc</code> 가 <code>@.aNoRecipes -= 1</code>, 나갈 때 0 이면 Drain, 아니면 버퍼로 되돌림. 되돌아오는 손님 때문에 버퍼가 붐비니 Capacity 를 8로 늘려요.</p>
+</section>
+
+<section class="card" id="ex3" data-toc="예제 3: 조립·분해·Sorter">
+  <h2>예제 3 — 조립(Assembly) · 분해(Dismantle) · Sorter</h2>
+  <div class="cols">
+    <div class="box"><h4>AssemblyStation</h4>메인 MU 에 부품(mounting parts)을 붙임 (차체 + 도어·펜더). <b>Assembly table</b>: 각 선행 객체에서 몇 개(Predecessors) 또는 MU 타입별 몇 개. <b>Assembly mode</b>: Delete MUs(부품 삭제) / Attach MUs(메인 MU 에 싣기). <b>Exiting MU</b>: Main MU 또는 New MU.</div>
+    <div class="box"><h4>DismantleStation</h4>메인 MU 에서 부품을 떼어 내거나 새로 만듦. 예: 컨테이너 1개 + 아이템 4개를 조립 → 나중에 분해해 컨테이너는 되돌려 보냄(Detach MUs).</div>
+    <div class="box"><h4>Sorter</h4>Buffer 대신 쓰면 <b>우선순위</b>대로 꺼냄. 예: 레시피 적은 손님 먼저 → 1잔 손님 대기 ↓</div>
+  </div>
+  <div class="lab-box">
+    <div class="lh"><span class="pill">연습 6</span><b>FIFO vs Sorter</b></div>
+    <div class="ps-lab" data-guide="sorter"></div>
+    <div class="q" data-id="c2-sorter" data-title="Sorter 효과">
+      <p>Sorter(짧은 작업 우선)의 효과로 맞는 것은? (실습의 Type statistics 로 확인)</p>
+      <div class="choices" data-a="1"><button>모든 타입의 체류시간이 줄어든다</button><button>1잔 손님은 크게 줄고 3잔 손님은 늘며, 전체 평균은 조금 줄어든다</button><button>전체 처리량이 크게 늘어난다</button></div>
+      <details class="sol"><summary>해설</summary><div>점원이 일하는 총량은 같으니 처리량은 그대로. 순서만 바꿔서 짧은 일을 먼저 끝내면 "기다리는 사람 수 × 시간"의 합이 줄어 전체 평균 체류가 약간 줄어요 (SPT 규칙). 대신 긴 작업(3잔)은 더 기다려요 — 공정성 문제.</div></details>
+    </div>
+  </div>
+</section>
+
+<div class="part"><small>PART 3</small><h2>확장 모델</h2></div>
+
+<section class="card" id="ex4" data-toc="예제 4: 실험 관리자">
+  <h2>예제 4 — Experiment Manager 로 점원 수 최적화</h2>
+  <p>창구 1개 드라이브스루. 도착 포아송 시간당 10명, 서비스 지수 평균 8분. 창구 앞 공간 6칸(서비스 중인 차 포함) — 다 차면 도착한 차는 <b>떠남</b>. 공간 1칸 월 $500, 손님 1명당 이익 $3, 점원 1명 월급 $4,000. 1달 = 30일, 실험 1회 = 12개월, k = 1~4.</p>
+  <ol>
+    <li>점원 k명 → <b>ParallelProc</b> 의 X-dimension = k</li>
+    <li>출력 변수 <code>vProfitPerMonth</code>, <code>vCostForHiring</code>, <code>vTotalProfit</code> 정의 (EndSim 메서드에서 계산)</li>
+    <li><b>ExperimentManager</b>: Output values(vTotalProfit), Input values(ParallelProc.XDim — 속성 창에서 이름 찾기), Experiment design(1,2,3,4)</li>
+    <li>실행 → 리포트에서 평균·신뢰구간 비교</li>
+  </ol>
+  <div class="lab-box">
+    <div class="lh"><span class="pill">연습 7</span><b>비용 계산 + 실험 실행</b></div>
+    <div class="q" data-id="c2-ex4cost" data-title="드라이브스루 비용">
+      <div class="ans-row">
+        <label>k = 2 일 때 월 고정비 ($) <input class="ans" data-a="11000" data-tol="0"></label>
+        <label>k = 2 일 때 서비스 중 아닌 대기 칸 수 <input class="ans" data-a="4" data-tol="0"></label>
+      </div>
+      <button class="btn primary check">채점</button>
+      <details class="sol"><summary>풀이</summary><div>4,000×2 + 500×6 = 11,000. 6칸에 서비스 중인 차 2대 포함 → 줄 서는 칸 4 (Buffer capacity = 6 − k).</div></details>
+    </div>
+    <div class="ps-lab" data-guide="drive"></div>
+    <div class="q" data-id="c2-ex4k" data-title="드라이브스루 최적 k">
+      <p>실습의 실험 결과로 보면 이익을 최대로 하는 k 는?</p>
+      <div class="choices" data-a="1"><button>k = 1</button><button>k = 2</button><button>k = 3</button><button>k = 4</button></div>
+      <details class="sol"><summary>해설</summary><div>k=1 은 ρ = 8/6 ≈ 1.33 으로 손님을 많이 잃고, k=3 부터는 더 받는 손님이 거의 없는데 월급만 늘어요. 신뢰구간이 겹치지 않는지도 확인!</div></details>
+    </div>
+  </div>
+</section>
+
+<section class="card" id="mh" data-toc="운반: 컨베이어·AGV·작업자·크레인">
+  <h2>운반 장비 모델링</h2>
+  <p>이동을 <b>단순 시간 지연</b>으로 둬도 되는 경우가 많아요(어떻게 움직였는지 관심 없으면). 하지만 <b>운반 수단이 부족해 기다리는 일</b>이 중요하면 자세히 모델링해야 해요 — 자원(resource)이 필요한 이동, 거리와 연결된 운반차(transporter).</p>
+  <div class="tbl"><table class="t">
+    <tr><th>방식</th><th>Plant Sim 객체</th><th>핵심</th></tr>
+    <tr><td>컨베이어</td><td>Line (Conveyor), TransferStation, 센서</td><td>TransferStation 이 버퍼 → 컨베이어로 옮김. 출구 지점 도달 시 <code>mFC1</code> 이 확률 0.7로 bf21, <code>mFC2</code> 는 아직 시험 안 한 것 bf22. 사용자 센서로 하역 가능</td></tr>
+    <tr><td>운반차 + 트랙</td><td>Transporter, Track</td><td>Source 가 Transporter 생성, Track 위를 이동. Track 의 센서 4개로 버퍼 상·하역</td></tr>
+    <tr><td>작업자</td><td>Worker, WorkerPool, Workplace, Broker</td><td>WorkerPool 이 작업자를 보관, Broker 가 요청에 따라 작업자를 Workplace 사이로 보냄. 스테이션·버퍼마다 Broker 와 Service 지정. 개체에 목적지 정보 설정</td></tr>
+    <tr><td>AGV</td><td>Transporter, AGVpool, Marker</td><td>AGVpool 의 <code>tfWorkList</code>: 이동 요청이 생기면 행 추가(도착 시, 가공 후) → AGV 가 출발 마커로 가서 집고 → 목적 마커에 내려놓고 → 행 삭제</td></tr>
+    <tr><td>2D 크레인</td><td>Track + Transporter 2단 (Rack master + SR machine)</td><td>Rack master 는 트랙 위 수평, SR machine 은 그 위에서 수직. init 에서 생성, 센서 도달 시 <code>mRackMasterX</code>·<code>mSRmachineY</code> 로 정지·상하역</td></tr>
+  </table></div>
+  <div class="ps"><b>팀 프로젝트 연결</b> — TO-BE 의 AMR 은 "AGV + tfWorkList" 구조 그대로예요. 연습장 5장 실습처럼 Exit control 메서드로 "어디로 보낼지" 정하는 부분이 그 핵심이에요.</div>
+  <div class="lab-box">
+    <div class="lh"><span class="pill">연습 8</span><b>언제 자세히 모델링하나</b></div>
+    <div class="q" data-id="c2-mh" data-title="운반 모델링 수준">
+      <p>AMR 이 10대뿐이고 차량이 몰리면 AMR 을 기다리는 시간이 길어진다. 이 효과를 보려면?</p>
+      <div class="choices" data-a="1"><button>스테이션 사이 이동을 고정 지연 8초로만 둔다</button><button>AMR 을 한정된 자원(풀)으로 두고, 비어 있는 AMR 이 있어야 이동하게 모델링한다</button><button>AMR 은 생략하고 컨베이어로 바꾼다</button></div>
+    </div>
+  </div>
+</section>
+
+<section class="card" id="ex56" data-toc="예제 5·6: 파이프 공장과 라우팅">
+  <h2>예제 5·6 — 파이프 절단·굽힘·청동 도금, 그리고 라우팅</h2>
+  <p>부품은 시간당 4개 포아송 도착, 모두 하나의 버퍼를 거쳐요.</p>
+  <div class="tbl"><table class="t">
+    <tr><th>스테이션</th><th>처리시간</th><th>버퍼</th></tr>
+    <tr><td>절단 (1) — 확률 0.7 로 들름</td><td>로그정규 평균 10, σ 5 (분)</td><td>무한</td></tr>
+    <tr><td>굽힘 (2) — 모두</td><td>로그정규 평균 20, σ 5</td><td>무한</td></tr>
+    <tr><td>청동 도금 — 작업자 3명</td><td>삼각 (10, 20, 30)</td><td>10개</td></tr>
+  </table></div>
+  <p>레이아웃: 구간별 5m·10m·1m, 컨베이어 속도 0.1 m/s.</p>
+  <h3>예제 6: 라우팅 표</h3>
+  <p>확률 0.6 → myProduct1, route = {1, 2} (절단 → 굽힘). 확률 0.4 → myProduct2, route = {2}. 개체마다 <code>aRoute</code> 표(순서별 스테이션·처리시간)와 현재 순번 <code>aCur</code> 를 두고:</p>
+  <ul>
+    <li>Source 의 MU selection = Percentage (0.6 / 0.4)</li>
+    <li><code>mFCbf</code>, <code>mFC</code>: <code>@.aRoute[1, @.aCur]</code> 로 다음 목적지 결정, 이동 요청</li>
+    <li><code>mProc</code>: 처리시간을 aRoute 에서 읽어 설정, <code>@.aCur += 1</code></li>
+  </ul>
+  <div class="ps-lab" data-guide="pipe"></div>
+  <div class="lab-box">
+    <div class="lh"><span class="pill">연습 9</span><b>이용률로 먼저 점검</b></div>
+    <div class="q" data-id="c2-pipe" data-title="파이프 공장 이용률">
+      <div class="ans-row">
+        <label>예제 5 절단 ρ <input class="ans" data-a="0.4667" data-tol="0.005"></label>
+        <label>굽힘 ρ (1대) <input class="ans" data-a="1.3333" data-tol="0.005"></label>
+        <label>청동 도금 ρ (3명) <input class="ans" data-a="0.4444" data-tol="0.005"></label>
+        <label>예제 6 절단 ρ (확률 0.6) <input class="ans" data-a="0.4" data-tol="0.005"></label>
+      </div>
+      <button class="btn primary check">채점</button>
+      <details class="sol"><summary>풀이</summary><div>λ = 4/60 개/분. 절단: 0.7 × (4/60) × 10 = 0.467. 굽힘: (4/60) × 20 = <b>1.33 &gt; 1</b> → 1대면 대기열 폭주! 청동: (4/60) × 20 / 3 = 0.444 (삼각 평균 = (10+20+30)/3 = 20). 예제 6 절단: 0.6 × (4/60) × 10 = 0.4.<br>숫자를 그대로 넣으면 굽힘이 불안정하니 모델을 돌리기 전에 이렇게 이용률부터 확인하는 습관을 들여요. Plant Sim 실습에서 직접 확인해 보세요.</div></details>
+    </div>
+  </div>
+</section>
+
+<section class="card" id="quiz" data-toc="2장 확인 문제">
+  <h2>2장 확인 문제</h2>
+  <div class="lab-box">
+    <div class="lh"><span class="pill">확인</span><b>상황 문제</b></div>
+    <div class="q" data-id="c2-q1" data-title="Non-blocking 분기">
+      <p>Buffer 뒤에 SingleProc 두 대(M1, M2)가 연결돼 있고 Exit strategy 가 기본값(Non-blocking)이다. M1 이 바쁘고 M2 가 비었다면?</p>
+      <div class="choices" data-a="0"><button>MU 는 M2 로 간다</button><button>MU 는 M1 이 빌 때까지 Buffer 에서 기다린다</button><button>MU 가 사라진다</button></div>
+    </div>
+    <div class="q" data-id="c2-q2" data-title="속성으로 경로 결정">
+      <p>도어 라인 TO-BE 에서 A 모델만 D 스테이션에 가야 한다. Plant Sim 에서 가장 자연스러운 구현은?</p>
+      <div class="choices" data-a="2"><button>D 스테이션의 처리시간을 0으로 둔다</button><button>A 모델 전용 Source 를 따로 만든다</button><button>MU 의 타입(속성)을 Exit control 메서드에서 보고 <code>@.move(D)</code> 또는 다음 스테이션으로 보낸다</button></div>
+    </div>
+    <div class="q" data-id="c2-q3" data-title="ParallelProc">
+      <p>예제 4 에서 점원 수 k 를 실험 관리자의 입력 변수로 쓰려면 어떤 속성을 바꾸나?</p>
+      <div class="choices" data-a="1"><button>Buffer.Capacity</button><button>ParallelProc 의 X-dimension</button><button>Source.Interval</button></div>
+    </div>
+  </div>
+</section>
+
+<nav class="ch-nav"></nav>
+    </main>
+  </div>
+</div>
+<script src="assets/notes.js?v=1"></script>
+</body>
+</html>

@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>04 출력 분석 · sim notebook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=Gaegu:wght@400;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="assets/style.css?v=2"><link rel="stylesheet" href="assets/notes-tools.css?v=1">
+<script src="assets/des.js?v=1"></script><script src="assets/plot.js?v=1"></script><script src="assets/app.js?v=2"></script>
+<style>.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; } .plotbox { border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; background: #fff; }</style>
+</head>
+<body data-ch="04">
+<div class="wrap">
+  <div class="hero">
+    <div class="kicker">Chapter 04 · Analyzing Simulation Output</div>
+    <h1 class="display">출력 분석</h1>
+    <p class="lede">시뮬레이션 결과는 "한 번 돌린 숫자"가 아니라 <b>표본</b>이에요. 통계를 어떻게 모으는지(관측 vs 시간 가중), 몇 번 반복해야 하는지, 워밍업은 얼마나 버려야 하는지, 두 대안 중 무엇이 나은지 통계적으로 말하는 법을 익힙니다.</p>
+    <div class="meta">강의자료 Chap 4 · 시험 계산 문제 단골 (Example I · II, 반복 수, 신뢰구간) · 실습 8개</div>
+  </div>
+  <div class="page-grid">
+    <aside class="toc"></aside>
+    <main class="lesson">
+
+<div class="part"><small>PART 1</small><h2>통계 모으기</h2></div>
+
+<section class="card" id="rep" data-toc="반복(Replication)">
+  <h2>반복 (Replication)</h2>
+  <p><b>Replication</b> = 초기 조건에서 종료 조건까지 시스템이 진화하는 <b>표본 경로 하나</b>를 만드는 것.</p>
+  <div class="cols">
+    <div class="def"><span class="tag">Within-replication 통계</span><p>한 번의 반복 <b>안에서</b> 모은 값. 예: 이번 실행의 손님 100명 대기시간 평균.</p></div>
+    <div class="def"><span class="tag">Across-replication 통계</span><p>여러 반복의 결과를 <b>가로질러</b> 모은 값. 예: 반복 10번의 평균 대기시간 10개 → 평균·표준편차·신뢰구간.</p></div>
+  </div>
+  <p>한 반복 안의 관측값(1번 손님, 2번 손님…)은 서로 상관되어 있고 분포도 같지 않아서 바로 신뢰구간을 만들 수 없어요. 반면 <b>반복마다의 평균</b>은 서로 독립이고 같은 분포 → 고전 통계(t-분포)를 쓸 수 있어요.</p>
+</section>
+
+<section class="card" id="obs" data-toc="관측 vs 시간 기반 통계">
+  <h2>관측(Observational) vs 시간 기반(Time-based) 자료</h2>
+  <div class="cols">
+    <div class="box accent-b"><h4>Observational — 빈도</h4>지속되지 않는, 같은 무게의 값들의 나열. 개체가 어떤 상태에 <b>들어간 시각과 나온 시각</b>을 찍어 그 구간 길이를 기록. 예: 대기시간, 체류시간(리드타임).
+      <div class="eq">\[ \bar T_q(n) = \frac{1}{n}\sum_{i=1}^{n} T_i, \quad T_i = D_i - A_i \]</div></div>
+    <div class="box accent-y"><h4>Time-based — 지속시간</h4>일정 시간 동안 <b>유지되는</b> 값, 그 시간만큼 가중. 보통 상태변수. 예: 대기열 길이, WIP, 가동 여부.
+      <div class="eq">\[ \bar L_q(n) = \frac{\int_{t_0}^{t_n} q(t)\,dt}{t_n - t_0} = \frac{\sum_k q_k v_k}{t_n - t_0} \]</div></div>
+  </div>
+  <div class="lab-box">
+    <div class="lh"><span class="pill">연습 1</span><b>Example I — 손님 5명 (강의 예제)</b></div>
+    <div class="tbl"><table class="t" style="max-width:520px"><tr><th>손님 i</th><th class="num">1</th><th class="num">2</th><th class="num">3</th><th class="num">4</th><th class="num">5</th></tr>
+      <tr><td>대기열 진입 \(A_i\)</td><td class="num">1</td><td class="num">4</td><td class="num">7</td><td class="num">7</td><td class="num">13</td></tr>
+      <tr><td>대기열 이탈 \(D_i\)</td><td class="num">5</td><td class="num">9</td><td class="num">10</td><td class="num">12</td><td class="num">14</td></tr></table></div>
+    <p style="font-size:14.5px">관측 구간 0 ~ 15.</p>
+    <div class="q" data-id="c4-ex1" data-title="Example I Tq, Lq">
+      <div class="ans-row">
+        <label>\(\sum T_i\) <input class="ans" data-a="18" data-tol="0"></label>
+        <label>\(\bar T_q(5)\) <input class="ans" data-a="3.6"></label>
+        <label>\(\int q(t)dt\) (넓이) <input class="ans" data-a="18" data-tol="0"></label>
+        <label>\(\bar L_q\) <input class="ans" data-a="1.2"></label>
+      </div>
+      <button class="btn primary check">채점</button>
+      <details class="sol"><summary>풀이 · q(t) 그래프</summary><div>
+        \(T = 4, 5, 3, 5, 1\) → 합 18, 평균 3.6.<br>
+        q(t): 0(0~1) → 1(1~4) → 2(4~5) → 1(5~7) → 3(7~9) → 2(9~10) → 1(10~12) → 0(12~13) → 1(13~14) → 0(14~15)<br>
+        넓이 = 0·1 + 1·3 + 2·1 + 1·2 + 3·2 + 2·1 + 1·2 + 0·1 + 1·1 + 0·1 = 18 → \(\bar L_q = 18/15 = 1.2\).
+        <div id="ex1-plot"></div>
+        <b>왜 넓이가 같을까?</b> 손님 한 명이 대기열에 있는 동안 q(t) 를 1만큼 올리니, 넓이 = 모든 손님 대기시간의 합 = 18. 그래서 \(L_q = \lambda T_q\) (Little): 1.2 = (5/15) × 3.6 ✓</div></details>
+    </div>
+  </div>
+  <div class="lab-box">
+    <div class="lh"><span class="pill">연습 2</span><b>Example II — 손님 8명, 0 ~ 25</b></div>
+    <p style="font-size:14.5px;margin:0 0 6px">대기시간 \(T_i\) = 0, 11, 8, 7, 2, 5, 6, 0. 대기열 길이는 아래 표처럼 변해요.</p>
+    <div class="tbl"><table class="t small"><tr><th>구간</th><td>0–2</td><td>2–7</td><td>7–10</td><td>10–13</td><td>13–15</td><td>15–16</td><td>16–17</td><td>17–18</td><td>18–21</td><td>21–22</td><td>22–25</td></tr>
+      <tr><th>q</th><td>0</td><td>1</td><td>2</td><td>3</td><td>2</td><td>1</td><td>4</td><td>3</td><td>2</td><td>1</td><td>0</td></tr></table></div>
+    <div class="q" data-id="c4-ex2" data-title="Example II Tq, Lq">
+      <div class="ans-row">
+        <label>\(\bar T_q(8)\) <input class="ans" data-a="4.875"></label>
+        <label>\(\bar L_q\) <input class="ans" data-a="1.56"></label>
+      </div>
+      <button class="btn primary check">채점</button>
+      <details class="sol"><summary>풀이</summary><div>\(\sum T_i = 39\) → 39/8 = 4.875. 넓이 = 0·2 + 1·5 + 2·3 + 3·3 + 2·2 + 1·1 + 4·1 + 3·1 + 2·3 + 1·1 + 0·3 = 39 → 39/25 = 1.56. 역시 넓이 = 대기시간 합.</div></details>
+    </div>
+  </div>
+  <h3>Plant Simulation 에서 찾는 곳</h3>
+  <div class="tbl"><table class="t">
+    <tr><th>종류</th><th>어디서</th><th>예</th></tr>
+    <tr><td>관측 기반</td><td>Drain 의 <b>Statistics</b>·<b>Type Statistics</b> 탭 / 로그를 엑셀로 복사해 계산</td><td>처리량 (Throughput per hour), 리드타임 (<b>Average lifespan</b>)</td></tr>
+    <tr><td>시간 기반</td><td>Variable 의 Statistics 옵션 켜기 → 값별 <b>Duration %</b> (값 × 지속시간 비율) / 프로그램으로 계산</td><td>WIP</td></tr>
+  </table></div>
+  <div class="lab-box">
+    <div class="lh"><span class="pill">연습 3</span><b>어느 쪽?</b></div>
+    <div class="q" data-id="c4-obs-kind" data-title="관측 vs 시간 기반 구분">
+      <div class="ans-row" style="display:grid;gap:8px">
+        <label>AMR 가동률 <select class="ans" data-a="시간"><option></option><option>관측</option><option>시간</option></select></label>
+        <label>차량 한 대의 라인 리드타임 평균 <select class="ans" data-a="관측"><option></option><option>관측</option><option>시간</option></select></label>
+        <label>버퍼 안 평균 차량 수 <select class="ans" data-a="시간"><option></option><option>관측</option><option>시간</option></select></label>
+        <label>AMR 을 기다린 평균 시간 <select class="ans" data-a="관측"><option></option><option>관측</option><option>시간</option></select></label>
+      </div>
+      <button class="btn primary check">채점</button>
+    </div>
+  </div>
+</section>
+
+<div class="part"><small>PART 2</small><h2>유한 · 무한 시간 범위</h2></div>
+
+<section class="card" id="horizon" data-toc="Finite vs Infinite horizon">
+  <h2>Finite horizon vs Infinite horizon</h2>
+  <div class="cols">
+    <div class="box"><h4>Finite (terminating)</h4>끝나는 시각·조건이 분명. 예: 9시~17시 은행, 전력이 임계값에 닿을 때까지의 전투, 제품 100개 주문 생산.</div>
+    <div class="box"><h4>Infinite (steady state)</h4>뚜렷한 끝이 없고 장기(정상상태) 거동에 관심. 예: 공장의 정상상태 처리량, 24/7 응급실, 항상 켜진 통신 시스템.</div>
+  </div>
+  <div class="lab-box">
+    <div class="lh"><span class="pill">연습 4</span><b>분류</b></div>
+    <div class="q" data-id="c4-hz" data-title="Finite/Infinite 분류">
+      <div class="ans-row" style="display:grid;gap:8px">
+        <label>오전 6시~자정 운영하는 공항 출국장의 하루 <select class="ans" data-a="finite"><option></option><option value="finite">Finite</option><option value="infinite">Infinite</option></select></label>
+        <label>3교대로 쉬지 않는 도어 조립 라인의 장기 시간당 처리량 <select class="ans" data-a="infinite"><option></option><option value="finite">Finite</option><option value="infinite">Infinite</option></select></label>
+        <label>신규 수주 굴착기 50대를 다 만들 때까지의 납기 <select class="ans" data-a="finite"><option></option><option value="finite">Finite</option><option value="infinite">Infinite</option></select></label>
+      </div>
+      <button class="btn primary check">채점</button>
+    </div>
+  </div>
+</section>
+
+<section class="card" id="nrep" data-toc="반복 수 정하기">
+  <h2>Finite horizon 분석: 독립 반복법과 반복 수</h2>
+  <p><b>독립 반복법</b>: 같은 초기 조건에서 서로 다른 난수로 여러 번 실행 → 반복 평균 \(X_1, \dots, X_n\) 이 독립. 신뢰구간:</p>
+  <div class="eq">\[ \bar X \pm t_{1-\alpha/2,\,n-1}\,\frac{S}{\sqrt n}, \qquad h = t_{1-\alpha/2,\,n-1}\frac{S}{\sqrt n}\ \ (\text{반폭, half-width}) \]</div>
+  <div class="cols">
+    <div class="def"><span class="tag">t-분포 반복법</span><p>원하는 반폭 \(\epsilon\) 이 되는 가장 작은 \(n\): \(n \ge \left(\dfrac{t_{1-\alpha/2,\,n-1}\, S}{\epsilon}\right)^2\). t 가 n 에 따라 바뀌니 n 을 늘려 가며 확인.</p></div>
+    <div class="def"><span class="tag">반폭 비율법</span><p>예비 실행 \(n_0\) 번에서 반폭 \(h_0\) → \(n \approx n_0 \left(\dfrac{h_0}{\epsilon}\right)^2\) (올림).</p></div>
+  </div>
+  <p>Plant Sim: Manage Class Library → Tools 의 <b>Sequential Sampler</b> 에 반폭·신뢰수준을 주면 반복 수를 정해 줘요.</p>
+  <div class="lab-box">
+    <div class="lh"><span class="pill">연습 5</span><b>반복 수 계산</b></div>
+    <div class="q" data-id="c4-nrep" data-title="반복 수 계산">
+      <p>예비 실행 \(n_0 = 10\), 평균 대기시간 표본표준편차 \(S = 2.4\)분, 95%. (\(t_{0.975,9} = 2.262\))</p>
+      <div class="ans-row">
+        <label>현재 반폭 \(h_0\) <input class="ans" data-a="1.7167" data-tol="0.01"></label>
+        <label>반폭 0.5분이 되려면 (반폭 비율법) \(n\) ≈ <input class="ans" data-a="118" data-tol="1"></label>
+        <label>반폭을 절반으로 줄이려면 반복 수는 몇 배? <input class="ans" data-a="4" data-tol="0"></label>
+      </div>
+      <button class="btn primary check">채점</button>
+      <details class="sol"><summary>풀이</summary><div>\(h_0 = 2.262 × 2.4/\sqrt{10} = 1.717\). \(n ≈ 10 × (1.717/0.5)^2 = 117.9\) → <b>118</b>. 반폭 ∝ \(1/\sqrt n\) 이라 절반으로 줄이려면 <b>4배</b>.</div></details>
+    </div>
+    <div class="mini">
+      <div class="ctrl"><b>Sequential Sampler 흉내</b> 커피 부스(ρ=0.5) 16시간 영업, 평균 대기시간 <label>목표 반폭 <input id="s-h" type="number" value="0.3" step="0.05" style="width:60px">분</label><button class="btn primary sm" id="s-go">반폭이 목표 이하일 때까지 반복</button></div>
+      <div id="s-plot"></div><div class="out" id="s-out"></div>
+    </div>
+  </div>
+</section>
+
+<section class="card" id="warm" data-toc="워밍업 · 초기화 편향">
+  <h2>Infinite horizon: 초기화 편향과 워밍업</h2>
+  <p>보통 시뮬레이션은 <b>비어 있는 상태</b>로 시작해요. 그런데 정상상태의 공장은 비어 있지 않죠. M/M/1 에서 1번째 손님의 대기시간 분포는 1000번째 손님과 같지 않아요(identically distributed 아님) → 앞부분 자료가 평균을 끌어내림 = <b>초기화 편향(initialization bias)</b>.</p>
+  <div class="def"><span class="tag">워밍업 (Warm-up period)</span><p>미리 정한 시간 동안은 통계를 버리고, 그 이후의 <b>자료 수집 구간</b>만 보고. Plant Sim: EventController 의 Statistics 시작 시각(이 사이트 시뮬레이터의 "워밍업").</p></div>
+  <div class="ps-lab" data-guide="output" data-note="Plant Sim 에서는 EventController 의 Statistics start 가 워밍업, ExperimentManager 의 Observations 가 반복 수예요."></div>
+  <div class="lab-box">
+    <div class="lh"><span class="pill">연습 6</span><b>Welch 그래프로 워밍업 정하기</b></div>
+    <p style="font-size:14.5px;margin:0 0 6px">M/M/1, ρ = 0.9 (도착 평균 1, 서비스 평균 0.9), 빈 상태에서 시작. 반복 100번에서 n번째 손님 대기시간을 평균 내고 이동평균으로 다듬어요. 이론 정상상태 \(T_q = 8.1\).</p>
+    <div class="mini">
+      <div class="ctrl"><label>이동평균 창 <input id="w-win" type="number" value="25" style="width:56px"></label><label>워밍업 (손님 수) <input id="w-cut" type="range" min="0" max="1200" step="50" value="0"> <span id="w-cutv">0</span></label><button class="btn primary sm" id="w-go">새로 100회 반복</button></div>
+      <div id="w-plot"></div><div class="out" id="w-out"></div>
+    </div>
+    <div class="q" data-id="c4-warm" data-title="워밍업 해석">
+      <p>워밍업을 0 → 곡선이 평평해지는 지점으로 늘리면 추정치는?</p>
+      <div class="choices" data-a="1"><button>낮아진다 — 앞쪽 큰 값이 사라져서</button><button>이론값(8.1) 쪽으로 높아진다 — 비어 있던 초반의 짧은 대기가 빠져서</button><button>변하지 않는다</button></div>
+    </div>
+  </div>
+</section>
+
+<div class="part"><small>PART 3</small><h2>대안 비교와 최적화</h2></div>
+
+<section class="card" id="cmp" data-toc="두 시스템 비교">
+  <h2>두 시스템 비교 (분산 미지 · 서로 다름)</h2>
+  <p>입력이 다르면 출력도 당연히 달라요. "다른가?"가 아니라 <b>"어느 쪽이 나은가?"</b>를 통계적으로 말하는 게 목표.</p>
+  <div class="eq">\[ \hat D = \bar X_1 - \bar X_2, \qquad \hat D \pm t_{1-\alpha/2,\,\hat\nu}\sqrt{\frac{S_1^2}{n_1} + \frac{S_2^2}{n_2}} \]
+  \[ \hat\nu = \frac{\left(S_1^2/n_1 + S_2^2/n_2\right)^2}{\dfrac{(S_1^2/n_1)^2}{n_1 - 1} + \dfrac{(S_2^2/n_2)^2}{n_2 - 1}} \]</div>
+  <ul>
+    <li>구간이 <b>0을 포함하지 않으면</b> 차이가 통계적으로 유의 → 부호로 어느 쪽이 큰지 판단</li>
+    <li>0을 포함하면 이 표본으로는 어느 쪽이 낫다고 말할 수 없음</li>
+    <li>신뢰수준 \(1-\alpha\) (예: 95%) ↔ 유의수준 \(\alpha\) (0.05)</li>
+    <li><b>p-value</b> = \(H_0\) 가 참일 때 관측한 것만큼 또는 더 극단적인 결과가 나올 확률. p &lt; α 이면 \(H_0\) 기각</li>
+  </ul>
+  <div class="lab-box">
+    <div class="lh"><span class="pill">연습 7</span><b>AS-IS vs TO-BE 리드타임 비교 (가상의 반복 결과)</b></div>
+    <div class="tbl" id="c-data"></div>
+    <div class="q" data-id="c4-welch" data-title="Welch 신뢰구간">
+      <div class="ans-row">
+        <label>\(\bar X_1\) <input class="ans" id="w1" data-a="0"></label>
+        <label>\(\bar X_2\) <input class="ans" id="w2" data-a="0"></label>
+        <label>\(\hat D\) <input class="ans" id="wd" data-a="0"></label>
+        <label>\(\hat\nu\) (소수 그대로) <input class="ans" id="wn" data-a="0"></label>
+        <label>95% 반폭 <input class="ans" id="wh" data-a="0"></label>
+        <label>결론 <select class="ans" data-a="TO-BE"><option></option><option value="TO-BE">TO-BE 리드타임이 더 짧다 (구간에 0 없음)</option><option value="none">차이가 있다고 할 수 없다</option><option value="AS-IS">AS-IS 가 더 짧다</option></select></label>
+      </div>
+      <p class="hint">t 값은 \(\hat\nu\) 를 내림한 자유도로 표에서 읽어요: <span id="wt"></span></p>
+      <button class="btn primary check">채점</button>
+      <details class="sol"><summary>풀이</summary><div id="w-sol"></div></details>
+    </div>
+    <div class="q" data-id="c4-pval" data-title="p-value 해석">
+      <p>Plant Sim 실험 결과 컨테이너 3개 → 4개에서 처리량 차이의 p-value = 0.41 (α = 0.05). 해석은?</p>
+      <div class="choices" data-a="2"><button>4개가 41% 더 좋다</button><button>귀무가설을 기각 — 4개가 확실히 낫다</button><button>H0(차이 없음)를 기각할 수 없다 → 처리량이 늘었다고 할 수 없으니 3개로 충분</button></div>
+    </div>
+  </div>
+</section>
+
+<section class="card" id="opt" data-toc="실험 관리자 · GA 최적화">
+  <h2>Experiment Manager · 최적화</h2>
+  <h3>예: 물류 컨테이너 수 정하기</h3>
+  <p>목표: <b>리드타임을 늘리지 않으면서 처리량 최대</b>. Output values / Input values / Experiments 를 설정하고 Exp1 = 컨테이너 1개, Exp2 = 2개, …</p>
+  <ul><li>컨테이너 ≥ 3 에서 처리량 증가가 아주 작음 (p-value &gt; α)</li><li>리드타임도 그 이상에서 변화 없음 → 더 늘려도 이득이 없는 최소 개수를 추천</li></ul>
+  <h3>컨베이어 예: 결정변수 2개</h3>
+  <div class="tbl"><table class="t">
+    <tr><th>결정변수</th><th>키우면 좋은 점</th><th>나쁜 점</th></tr>
+    <tr><td>Partload (컨테이너당 부품 수) <code>root.partload.AssemblyList[2,1]</code></td><td>운반 횟수 ↓</td><td>모으는 데 오래 걸려 이송 시간 ↑</td></tr>
+    <tr><td>Contload (팔레트당 컨테이너 수) <code>root.contload.AssemblyList[2,1]</code></td><td>운반 횟수 ↓</td><td>이송 시간 ↑</td></tr>
+  </table></div>
+  <div class="cols">
+    <div class="box"><h4>완전 열거 (Full enumeration)</h4>10 × 10 = 100 실험 전부. 확실히 최적이지만 오래 걸림 (간단한 예에서 <b>10분 16초</b>).</div>
+    <div class="box"><h4>유전 알고리즘 (GA)</h4>Manage Class Library → "Wizard for Genetic Algorithms". 세대 수·세대 크기, 최적화 변수, <b>적합도(fitness)와 방향</b>(statNumOut 최대 / statAvgLifeSpan 최소), 개체당 관측 수. 예에서 <b>3분 6초</b>에 같은 최적값(42,087.5).</div>
+  </div>
+  <div class="lab-box">
+    <div class="lh"><span class="pill">연습 8</span><b>최적화 판단</b></div>
+    <div class="q" data-id="c4-ga" data-title="GA vs 완전열거">
+      <p>결정변수가 4개, 각 20수준이면 완전 열거 실험 수는? 그리고 그때 합리적인 선택은?</p>
+      <div class="ans-row"><label>실험 수 <input class="ans" data-a="160000" data-tol="0"></label></div>
+      <button class="btn primary check">채점</button>
+      <div class="choices" data-a="1" style="margin-top:8px"><button>그래도 완전 열거 — 최적을 보장하니까</button><button>GA 같은 메타휴리스틱으로 좋은 해를 빨리 찾고, 상위 후보만 반복 수를 늘려 통계 비교</button></div>
+    </div>
+    <div class="q" data-id="c4-dir" data-title="GA 방향 설정">
+      <p>GA 적합도로 <code>Drain.statAvgLifeSpan</code> 을 넣었다. 최적화 방향은?</p>
+      <div class="choices" data-a="0"><button>Minimum — 평균 체류시간(리드타임)은 짧을수록 좋다</button><button>Maximum</button></div>
+    </div>
+  </div>
+</section>
+
+<section class="card" id="quiz" data-toc="4장 확인 문제">
+  <h2>4장 확인 문제</h2>
+  <div class="lab-box">
+    <div class="lh"><span class="pill">확인</span><b>상황 문제</b></div>
+    <div class="q" data-id="c4-q1" data-title="한 번 실행의 함정">
+      <p>팀원이 TO-BE 를 한 번(긴 실행) 돌려 처리량 45.2, AS-IS 를 한 번 돌려 44.1 이 나왔다며 "TO-BE 가 낫다"고 했다. 가장 적절한 반응은?</p>
+      <div class="choices" data-a="2"><button>숫자가 크니 맞다</button><button>실행 시간을 2배로 늘려 한 번 더 돌리면 된다</button><button>각각 여러 번 독립 반복해 신뢰구간(또는 차이의 신뢰구간)을 보고 판단해야 한다</button></div>
+    </div>
+    <div class="q" data-id="c4-q2" data-title="워밍업 대상">
+      <p>오전 9시에 문 열고 오후 5시에 닫는 은행 지점의 하루 평균 대기시간을 추정한다. 워밍업은?</p>
+      <div class="choices" data-a="0"><button>필요 없다 — Finite horizon 이고 빈 상태로 여는 게 실제 초기 조건</button><button>반드시 1시간 버려야 한다</button></div>
+    </div>
+    <div class="q" data-id="c4-q3" data-title="Little's law 활용">
+      <p>시간당 45대가 들어오는 라인의 평균 WIP 가 7.95 대다. 평균 리드타임(초)은?</p>
+      <div class="ans-row"><label><input class="ans" data-a="636" data-tol="2"> 초</label></div>
+      <button class="btn primary check">채점</button>
+      <details class="sol"><summary>풀이</summary><div>\(W = L/\lambda = 7.95 / (45/3600) = 636\)초.</div></details>
+    </div>
+  </div>
+</section>
+
+<nav class="ch-nav"></nav>
+    </main>
+  </div>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const S = window.SIM, fmt = S.fmt, $ = id => document.getElementById(id);
+  const stat = (l, v, s) => `<div class="stat"><div class="l">${l}</div><div class="v">${v}</div><div class="s">${s || ''}</div></div>`;
+  const step = segs => { const d = []; segs.forEach(([a, b, q]) => { d.push([a, q], [b, q]); }); return d; };
+
+  /* Example I 그래프 */
+  const e1 = [[0, 1, 0], [1, 4, 1], [4, 5, 2], [5, 7, 1], [7, 9, 3], [9, 10, 2], [10, 12, 1], [12, 13, 0], [13, 14, 1], [14, 15, 0]];
+  PLOT($('ex1-plot'), { w: 480, h: 180, xmin: 0, xmax: 15, ymax: 3.5, series: [{ type: 'bar', data: e1.map(([a, b, q]) => [a, b, q]), color: '#e6f3fe', op: 1 }, { type: 'line', data: step(e1), color: '#0075de' }], xlabel: '시각 t', ylabel: 'q(t)' });
+
+  /* Sequential sampler */
+  $('s-go').onclick = () => {
+    const h = +$('s-h').value || .3, m = { hour: 60, source: { dist: { d: 'exp', m: 6 } }, stages: [{ name: 'Clerk', dist: { d: 'exp', m: 3 } }] };
+    const xs = [], hs = []; let seed = Math.floor(Math.random() * 1e6), sm;
+    while (xs.length < 400) { const sim = new S.Sim(m, { seed: seed + xs.length * 7919, end: 960 }); sim.runUntil(960); xs.push(sim.results().stages[0].avgWait); if (xs.length >= 3) { sm = S.summary(xs); hs.push([xs.length, sm.hw]); if (sm.hw <= h && xs.length >= 5) break; } }
+    PLOT($('s-plot'), { w: 520, h: 200, xmin: 3, xmax: Math.max(10, xs.length), ymax: Math.max(...hs.map(p => p[1])) * 1.05, series: [{ type: 'line', data: [[3, h], [Math.max(10, xs.length), h]], color: '#f64932', w: 1, dash: '4 3' }, { type: 'line', data: hs }], xlabel: '반복 수 n', ylabel: '반폭 h' });
+    $('s-out').innerHTML = stat('필요 반복 수', xs.length) + stat('평균 대기', fmt(sm.mean, 3), '분') + stat('반폭', fmt(sm.hw, 3), '목표 ' + h) + stat('반복 간 표준편차 S', fmt(sm.sd, 3));
+  };
+  $('s-go').click();
+
+  /* Welch plot */
+  let W = null;
+  function wgen() {
+    const R = 100, N = 1500, sums = new Float64Array(N); let seed = Math.floor(Math.random() * 1e6);
+    for (let r = 0; r < R; r++) { const u = S.rng(seed + r * 101); let arr = 0, done = 0; for (let i = 0; i < N; i++) { arr += -1 * Math.log(1 - u()); const st = Math.max(arr, done); sums[i] += (st - arr) / R; done = st - .9 * Math.log(1 - u()); } }
+    W = Array.from(sums);
+  }
+  function wdraw() {
+    const win = Math.max(1, +$('w-win').value || 25), cut = +$('w-cut').value; $('w-cutv').textContent = cut;
+    const ma = W.map((_, i) => { const a = Math.max(0, i - win), b = Math.min(W.length - 1, i + win); let s = 0; for (let k = a; k <= b; k++) s += W[k]; return [i + 1, s / (b - a + 1)]; });
+    const ym = Math.max(12, ...ma.map(p => p[1])); PLOT($('w-plot'), { w: 560, h: 230, xmin: 1, xmax: W.length, ymax: ym, series: [{ type: 'bar', data: [[1, Math.max(1.5, cut), ym]], color: '#fff4d6', op: 1 }, { type: 'line', data: [[1, 8.1], [W.length, 8.1]], color: '#f64932', w: 1, dash: '4 3' }, { type: 'line', data: ma }], xlabel: '손님 번호 n', ylabel: '평균 대기시간' });
+    const all = W.reduce((a, b) => a + b, 0) / W.length, after = W.slice(cut).reduce((a, b) => a + b, 0) / (W.length - cut);
+    $('w-out').innerHTML = stat('워밍업 없이 평균', fmt(all, 2), '이론 8.1') + stat(`처음 ${cut}명 버린 평균`, fmt(after, 2), '노란 구간 = 버림') + stat('편향 (이론 대비)', fmt(after - 8.1, 2));
+  }
+  $('w-go').onclick = () => { wgen(); wdraw(); }; $('w-cut').oninput = wdraw; $('w-win').onchange = wdraw;
+  wgen(); wdraw();
+
+  /* Welch CI 문제 */
+  const X1 = [912, 958, 887, 941, 1003, 925, 969, 896, 934, 950], X2 = [655, 702, 618, 681, 760, 640, 694, 629, 711, 668, 690, 645];
+  $('c-data').innerHTML = `<table class="t small"><tr><th>AS-IS 반복별 평균 리드타임(초), n₁=10</th><td>${X1.join(', ')}</td></tr><tr><th>TO-BE 반복별 평균 리드타임(초), n₂=12</th><td>${X2.join(', ')}</td></tr></table>`;
+  const s1 = S.summary(X1), s2 = S.summary(X2), v1 = s1.sd ** 2 / X1.length, v2 = s2.sd ** 2 / X2.length, D = s1.mean - s2.mean;
+  const nu = (v1 + v2) ** 2 / (v1 * v1 / (X1.length - 1) + v2 * v2 / (X2.length - 1)), t = S.tq(Math.floor(nu), .95), hw = t * Math.sqrt(v1 + v2);
+  $('w1').dataset.a = s1.mean.toFixed(2); $('w2').dataset.a = s2.mean.toFixed(2); $('wd').dataset.a = D.toFixed(2); $('wn').dataset.a = nu.toFixed(2); $('wn').dataset.tol = '0.1'; $('wh').dataset.a = hw.toFixed(2); $('wh').dataset.tol = '0.5';
+  $('wt').textContent = `t(0.975, ${Math.floor(nu)}) = ${t}`;
+  $('w-sol').innerHTML = `\\(\\bar X_1 = ${fmt(s1.mean, 2)},\\ S_1 = ${fmt(s1.sd, 2)}\\), \\(\\bar X_2 = ${fmt(s2.mean, 2)},\\ S_2 = ${fmt(s2.sd, 2)}\\).<br>\\(S_1^2/n_1 = ${fmt(v1, 2)}\\), \\(S_2^2/n_2 = ${fmt(v2, 2)}\\) → \\(\\hat\\nu = ${fmt(nu, 2)}\\) → t(0.975, ${Math.floor(nu)}) = ${t}.<br>반폭 = ${t} × √${fmt(v1 + v2, 2)} = ${fmt(hw, 2)} → \\(\\hat D\\) 의 95% 구간 = [${fmt(D - hw, 2)}, ${fmt(D + hw, 2)}]. 0을 포함하지 않고 양수 → AS-IS 가 더 길다 = <b>TO-BE 가 더 짧다</b>.`;
+  window.RL_RENDER_MATH($('w-sol'));
+});
+</script>
+<script src="assets/notes.js?v=1"></script>
+</body>
+</html>

@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Plant Sim 연습장 · sim notebook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css?v=2"><link rel="stylesheet" href="assets/ps.css?v=1">
+<script src="assets/simtalk.js?v=2"></script><script src="assets/ps-engine.js?v=2"></script><script src="assets/plot.js?v=1"></script>
+<script src="assets/app.js?v=2"></script><script src="assets/ps-ui.js?v=3"></script><script src="assets/ps-guides.js?v=4"></script>
+</head>
+<body class="psapp" data-page="sim">
+<div class="ps" id="ps-root"></div>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  PSUI.boot();
+  let g = new URLSearchParams(location.search).get('guide');
+  if (g == null) { try { g = localStorage.getItem('simnote:ps-guide') || ''; } catch (e) { g = ''; } }
+  const ex = new URLSearchParams(location.search).get('example'), E = ex && PS_EXAMPLES.find(x => x.id === ex);
+  if (E) { PS_START_GUIDE(''); PSUI.setModel(E.build()); PSUI.save(); }
+  else PS_START_GUIDE(g);
+});
+</script>
+</body>
+</html>
