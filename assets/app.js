@@ -162,15 +162,23 @@
   function initSlides(chId) {
     const map = SLIDE_MAP[chId]; if (!map) return;
     const deck = chId === 'proj' ? 'proj' : 'ch' + chId;
+    const deckName = deck === 'proj' ? '프로젝트 안내 (SI_Project)' : `Chap ${+chId} (SI_Chap0${+chId})`;
+    // "34-35,43-46" → "#33 ~ #34, #42 ~ #45" (슬라이드에 찍힌 번호)
+    const rangeLabel = r => r.split(',').map(x => { const [a, b] = x.split('-').map(Number); return b && b !== a ? `${slideNo(a)} ~ ${slideNo(b)}` : slideNo(a); }).join(', ');
+    const eachSection = f => document.querySelectorAll(map._first ? 'section.card' : 'section.card[id]').forEach((sec, idx) => {
+      const r = map._first ? (idx === 0 ? map._first : null) : map[sec.id]; if (!r) return;
+      const box = f(r); const h = sec.querySelector(':scope > h2'); if (h) h.after(box); else sec.prepend(box);
+    });
     const probe = new Image();
+    // 슬라이드 이미지가 없으면 (공개 사이트) 쪽 번호만 적어 둠 → 내 PDF 에서 찾아보기
+    probe.onerror = () => eachSection(r => { const d = document.createElement('div'); d.className = 'sl-ref'; d.innerHTML = `📑 강의자료 ${deckName} · 슬라이드 <b>${rangeLabel(r)}</b>`; return d; });
     probe.onload = () => {
-      document.querySelectorAll(map._first ? 'section.card' : 'section.card[id]').forEach((sec, idx) => {
-        const r = map._first ? (idx === 0 ? map._first : null) : map[sec.id]; if (!r) return;
+      eachSection(r => {
         const pages = parseRange(r);
         const box = document.createElement('div'); box.className = 'sl-strip';
-        box.innerHTML = `<div class="sl-h"><span>📑 강의 슬라이드 ${slideNo(pages[0])}${pages.length > 1 ? ' ~ ' + slideNo(pages[pages.length - 1]) : ''}</span><span class="sl-n">${pages.length}장 · 클릭하면 크게</span></div><div class="sl-row">${pages.map(n => `<button class="sl-t" data-n="${n}" title="슬라이드 ${slideNo(n)}"><img loading="lazy" src="${slideSrc(deck, n)}" alt="슬라이드 ${slideNo(n)}"><span>${slideNo(n)}</span></button>`).join('')}</div>`;
+        box.innerHTML = `<div class="sl-h"><span>📑 강의 슬라이드 ${rangeLabel(r)}</span><span class="sl-n">${pages.length}장 · 클릭하면 크게</span></div><div class="sl-row">${pages.map(n => `<button class="sl-t" data-n="${n}" title="슬라이드 ${slideNo(n)}"><img loading="lazy" src="${slideSrc(deck, n)}" alt="슬라이드 ${slideNo(n)}"><span>${slideNo(n)}</span></button>`).join('')}</div>`;
         box.querySelectorAll('.sl-t').forEach(b => b.onclick = () => lightbox(deck, +b.dataset.n));
-        const h = sec.querySelector(':scope > h2'); if (h) h.after(box); else sec.prepend(box);
+        return box;
       });
       const hero = document.querySelector('.hero .meta') || document.querySelector('.hero .lede');
       if (hero) { const b = document.createElement('button'); b.className = 'btn sm ghost'; b.style.marginLeft = '8px'; b.textContent = '📑 강의자료 전체 넘겨 보기'; b.onclick = () => lightbox(deck, 1); hero.appendChild(b); }

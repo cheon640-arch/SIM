@@ -252,3 +252,6 @@ section.card .ps-lab li { color: #dbe7ff; margin: 2px 0; }
 .sl-lb button:hover { background: rgba(255,255,255,.25); }
 .sl-lb .sl-x { position: absolute; top: 14px; right: 18px; font-size: 20px; width: 40px; height: 40px; }
 @media print { .sl-strip { display: none; } }
+.sl-ref { display: inline-block; margin: 6px 0 12px; padding: 4px 12px; border-radius: 9999px; background: #f1efed; color: var(--graphite); font-size: 13px; }
+.sl-ref b { color: var(--ink); }
+@media print { .sl-ref { display: none; } }
